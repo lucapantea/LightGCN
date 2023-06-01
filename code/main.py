@@ -40,7 +40,7 @@ else:
 try:
     for epoch in range(world.TRAIN_epochs):
         start = time.time()
-        if epoch %10 == 0:
+        if (epoch + 1) % 10 == 0:
             cprint("[TEST]")
             Procedure.Test(dataset, Recmodel, epoch, w, world.config['multicore'])
         output_information = Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k,w=w)
