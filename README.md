@@ -1,12 +1,4 @@
 
-#### Update
-
-2020-09:
-* Change the print format of each epoch
-* Add Cpp Extension in  `code/sources/`  for negative sampling. To use the extension, please install `pybind11` and `cppimport` under your environment
-
----
-
 ## LightGCN-pytorch
 
 This is the Pytorch implementation for our SIGIR 2020 paper:
@@ -21,13 +13,15 @@ Author: Prof. Xiangnan He (staff.ustc.edu.cn/~hexn/)
 
 In this work, we aim to simplify the design of GCN to make it more concise and appropriate for recommendation. We propose a new model named LightGCN,including only the most essential component in GCN—neighborhood aggregation—for collaborative filtering
 
+## Getting started
 
+In order to set up the environment for reproducing our experiments, 
+install the appropriate conda environment that suits your hardware specifications. 
+We put forward two YAML environment files: `environment_gpu.yml` CUDA support and `environment.yml` for CPU (and MPS) support.
 
-## Enviroment Requirement
-
-`pip install -r requirements.txt`
-
-
+```commandline
+conda env create -f <environment_filename>
+```
 
 ## Dataset
 
@@ -101,4 +95,12 @@ BPR[sample time][16.9=16.60+0.45]
 | **layer=2** | 0.05988               | 0.04956 | 0.0271 |
 | **layer=3** | 0.06347          | 0.05238 | 0.0285 |
 | **layer=4** | 0.06515                | 0.05325 | 0.02917 |
+
+
+
+#### Update
+
+2020-09:
+* Change the print format of each epoch
+* Add Cpp Extension in  `code/sources/`  for negative sampling. To use the extension, please install `pybind11` and `cppimport` under your environment
 
