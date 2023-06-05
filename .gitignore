@@ -17,3 +17,4 @@ __pycache__/
 .idea
 .vscode
 sources/
+/code/text_summaries.ipynb
