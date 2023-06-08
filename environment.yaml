@@ -1,0 +1,21 @@
+name: lightgcn
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9.16
+  - pip=22.2.2
+  - cpuonly=2.0
+  - pytorch=1.13.0
+  - pip:
+    - pandas==2.0.2
+    - scipy==1.10.1
+    - numpy==1.24.3
+    - tensorboardX==1.8
+    - scikit-learn==1.2.2
+    - tqdm==4.65.0
+    - pybind11==2.10.4
+    - protobuf==3.20.0
+    - cppimport==22.8.2
+    - wandb
