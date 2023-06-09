@@ -7,16 +7,17 @@ Xiangnan He et al. LightGCN: Simplifying and Powering Graph Convolution Network 
 '''
 import world
 import torch
-from torch import nn, optim
 import numpy as np
-from torch import log
+import os
+import register
+
+from sklearn.metrics import roc_auc_score
+from model import PairWiseModel
 from dataloader import BasicDataset
 from time import time
-from model import LightGCN
-from model import PairWiseModel
-from sklearn.metrics import roc_auc_score
-import random
-import os
+from torch import optim
+
+
 try:
     from cppimport import imp_from_filepath
     from os.path import join, dirname
@@ -50,8 +51,8 @@ class BPRLoss:
         return loss.cpu().item()
 
 
-def UniformSample_original(dataset, neg_ratio = 1):
-    dataset : BasicDataset
+def UniformSample_original(dataset, neg_ratio=1):
+    dataset: BasicDataset
     allPos = dataset.allPos
     start = time()
     if sample_ext:
@@ -68,7 +69,7 @@ def UniformSample_original_python(dataset):
         np.array
     """
     total_start = time()
-    dataset : BasicDataset
+    dataset: BasicDataset
     user_num = dataset.trainDataSize
     users = np.random.randint(0, dataset.n_users, user_num)
     allPos = dataset.allPos
@@ -106,11 +107,21 @@ def set_seed(seed):
     torch.manual_seed(seed)
 
 def getFileName():
-    if world.model_name == 'mf':
-        file = f"mf-{world.dataset}-{world.config['latent_dim_rec']}.pth.tar"
-    elif world.model_name == 'lgn':
-        file = f"lgn-{world.dataset}-{world.config['lightGCN_n_layers']}-{world.config['latent_dim_rec']}.pth.tar"
-    return os.path.join(world.FILE_PATH,file)
+    if world.model_name not in register.MODELS:
+        raise NotImplementedError(f'Model name \'{world.model_name}\' not recognized.')
+    num_layers = world.config['lightGCN_n_layers']
+    filename = f"{world.model_name}_{world.dataset}" \
+               f"{f'_layers-{num_layers}' if world.model_name == 'lgn' else ''}" \
+               f"_latent_dim-{world.config['latent_dim_rec']}" \
+               f"_bpr_batch_size-{world.config['bpr_batch_size']}" \
+               f"_dropout-{world.config['dropout']}" \
+               f"_keep_prob-{world.config['keep_prob']}" \
+               f"_A_n_fold-{world.config['A_n_fold']}" \
+               f"_test_u_batch_size-{world.config['test_u_batch_size']}" \
+               f"_lr-{world.config['lr']}" \
+               f"_decay-{world.config['decay']}" \
+               f"_seed-{world.config['seed']}.pt"
+    return os.path.join(world.FILE_PATH, filename)
 
 def minibatch(*tensors, **kwargs):
 

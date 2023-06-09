@@ -1,11 +1,12 @@
+import os
 import world
 import dataloader
 import model
-import utils
 from pprint import pprint
+from world import DATA_PATH
 
 if world.dataset in ['gowalla', 'yelp2018', 'amazon-book']:
-    dataset = dataloader.Loader(path="../data/"+world.dataset)
+    dataset = dataloader.Loader(path=os.path.join(DATA_PATH, world.dataset))
 elif world.dataset == 'lastfm':
     dataset = dataloader.LastFM()
 

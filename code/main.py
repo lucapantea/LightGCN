@@ -1,51 +1,94 @@
 import world
 import utils
-from world import cprint
+import register
 import torch
-import numpy as np
-from tensorboardX import SummaryWriter
+import wandb
 import time
 import Procedure
+
 from os.path import join
-# ==============================
-utils.set_seed(world.seed)
-print(">>SEED:", world.seed)
-# ==============================
-import register
+from tqdm import tqdm
+from tensorboardX import SummaryWriter
 from register import dataset
 
-Recmodel = register.MODELS[world.model_name](world.config, dataset)
-Recmodel = Recmodel.to(world.device)
-bpr = utils.BPRLoss(Recmodel, world.config)
+def main():
+    # Set seed
+    utils.set_seed(world.seed)
 
-weight_file = utils.getFileName()
-print(f"load and save to {weight_file}")
-if world.LOAD:
-    try:
-        Recmodel.load_state_dict(torch.load(weight_file,map_location=torch.device('cpu')))
-        world.cprint(f"loaded model weights from {weight_file}")
-    except FileNotFoundError:
-        print(f"{weight_file} not exists, start from beginning")
-Neg_k = 1
+    # Initialize model
+    Recmodel = register.MODELS[world.model_name](world.config, dataset)
+    Recmodel = Recmodel.to(world.device)
 
-# init tensorboard
-if world.tensorboard:
-    w : SummaryWriter = SummaryWriter(
-                                    join(world.BOARD_PATH, time.strftime("%m-%d-%Hh%Mm%Ss-") + "-" + world.comment)
-                                    )
-else:
-    w = None
-    world.cprint("not enable tensorflowboard")
+    # Initialize BPR loss
+    bpr = utils.BPRLoss(Recmodel, world.config)
 
-try:
-    for epoch in range(world.TRAIN_epochs):
-        start = time.time()
-        if (epoch + 1) % 10 == 0:
-            cprint("[TEST]")
-            Procedure.Test(dataset, Recmodel, epoch, w, world.config['multicore'])
-        output_information = Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k,w=w)
-        print(f'EPOCH[{epoch+1}/{world.TRAIN_epochs}] {output_information}')
-        torch.save(Recmodel.state_dict(), weight_file)
-finally:
+    # Load pretrain weights
+    weight_file = utils.getFileName()
+    print(f"load and save to {weight_file}")
+
+    if world.LOAD:
+        try:
+            Recmodel.load_state_dict(torch.load(weight_file, map_location=world.device))
+            world.cprint(f"loaded model weights from {weight_file}")
+        except FileNotFoundError:
+            print(f"{weight_file} not exists, start from beginning")
+    Neg_k = 1
+
+    # Creating the run name
+    num_layers = world.config['lightGCN_n_layers']
+    run_name = f"{world.model_name}_{world.dataset}" \
+               f"{f'_layers-{num_layers}' if world.model_name == 'lgn' else ''}" \
+               f"_latent_dim-{world.config['latent_dim_rec']}"
+
+    # Initialize tensorboard and wandb
+    tensorboard_log_dir = join(world.BOARD_PATH, time.strftime("%m-%d-%Hh%Mm%Ss-") + run_name)
+    wandb.tensorboard.patch(root_logdir=tensorboard_log_dir, tensorboard_x=True)
+    wandb.init(project="recsys", entity="msc-ai", config=world.config,
+               reinit=True, name=run_name)
+    wandb.watch(Recmodel)
+
+    # Initialize tensorboard writer
     if world.tensorboard:
-        w.close()
+        w: SummaryWriter = SummaryWriter(tensorboard_log_dir)
+    else:
+        w = None
+        world.cprint("Tensorboard not enabled.")
+
+    # Saving the best model instance based on set variable
+    save_model_by = 'ndcg'  # metrics: precision, recall, ndcg
+    best_test_metric, model_path = float('-inf'), ""
+
+    try:
+        print("Beginning training...")
+        with tqdm(range(world.TRAIN_epochs), desc="Epoch") as pbar:
+            for epoch in pbar:
+                avg_loss, sampling_time = Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k, w=w)
+                wandb.log({"BPR Loss": avg_loss, "Epoch": epoch+1})
+
+                # Evaluate the model on the validation set
+                if (epoch + 1) % 10 == 0:
+                    test_metrics = Procedure.Test(dataset, Recmodel, epoch, w, world.config['multicore'])
+                    wandb.log({**test_metrics, 'Epoch': epoch+1})
+
+                    if test_metrics[save_model_by] > best_test_metric:
+                        best_test_metric = test_metrics[save_model_by]
+                        wandb.run.summary[f"best_{save_model_by}"] = best_test_metric
+                        ckpt = {"state_dict": Recmodel.state_dict(),
+                                "optimizer_state_dict": bpr.opt.state_dict(),
+                                f"best_{save_model_by}": best_test_metric,
+                                "best_epoch": epoch}
+                        torch.save(ckpt, weight_file)
+
+                # Update the progress bar
+                pbar.set_postfix({'BPR loss': f'{avg_loss:.3f}', 'sampling time': sampling_time})
+
+    except KeyboardInterrupt:
+        # Training can be safely interrupted with Ctrl+C
+        print('Exiting training early because of keyboard interrupt.')
+    finally:
+        if world.tensorboard:
+            w.close()
+
+
+if __name__ == '__main__':
+    main()

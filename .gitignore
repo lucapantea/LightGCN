@@ -185,3 +185,6 @@ fabric.properties
 .idea
 .DS_Store
 wandb
+runs
+checkpoints
+sources
