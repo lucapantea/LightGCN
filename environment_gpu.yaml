@@ -19,4 +19,5 @@ dependencies:
     - pybind11==2.10.4
     - protobuf==3.20.0
     - cppimport==22.8.2
+    - tensorboard
     - wandb
