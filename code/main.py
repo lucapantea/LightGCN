@@ -63,12 +63,12 @@ def main():
         with tqdm(range(world.TRAIN_epochs), desc="Epoch") as pbar:
             for epoch in pbar:
                 avg_loss, sampling_time = Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k, w=w)
-                wandb.log({"BPR Loss": avg_loss, "Epoch": epoch+1})
+                wandb.log({"BPR Loss": avg_loss, "Epoch": epoch})
 
                 # Evaluate the model on the validation set
-                if (epoch + 1) % 10 == 0:
+                if epoch % 10 == 0:
                     test_metrics = Procedure.Test(dataset, Recmodel, epoch, w, world.config['multicore'])
-                    wandb.log({**test_metrics, 'Epoch': epoch+1})
+                    wandb.log({**test_metrics, 'Epoch': epoch})
 
                     if test_metrics[save_model_by] > best_test_metric:
                         best_test_metric = test_metrics[save_model_by]
