@@ -8,7 +8,7 @@ import Procedure
 
 from os.path import join
 from tqdm import tqdm
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from register import dataset
 
 def main():
@@ -42,7 +42,7 @@ def main():
 
     # Initialize tensorboard and wandb
     tensorboard_log_dir = join(world.BOARD_PATH, time.strftime("%m-%d-%Hh%Mm%Ss-") + run_name)
-    wandb.tensorboard.patch(root_logdir=tensorboard_log_dir, tensorboard_x=True)
+    wandb.tensorboard.patch(root_logdir=tensorboard_log_dir)
     wandb.init(project="recsys", entity="msc-ai", config=world.config,
                reinit=True, name=run_name)
     wandb.watch(Recmodel)
@@ -56,7 +56,7 @@ def main():
 
     # Saving the best model instance based on set variable
     save_model_by = 'ndcg'  # metrics: precision, recall, ndcg
-    best_test_metric, model_path = float('-inf'), ""
+    best_test_metric = float('-inf')
 
     try:
         print("Beginning training...")
@@ -86,6 +86,7 @@ def main():
         # Training can be safely interrupted with Ctrl+C
         print('Exiting training early because of keyboard interrupt.')
     finally:
+        wandb.finish()
         if world.tensorboard:
             w.close()
 
