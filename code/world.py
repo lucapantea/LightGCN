@@ -47,6 +47,7 @@ config['A_split'] = False
 config['bigdata'] = False
 config['seed'] = args.seed
 config['topks'] = eval(args.topks)
+config['single'] = args.single
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")
