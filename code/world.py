@@ -12,15 +12,7 @@ import sys
 from parse import parse_args
 from os.path import join
 import multiprocessing
-
-def prepare_dir(path_name):
-    """
-    This function is used to create the directories needed to output a path. If the directories already exist, the
-    function continues.
-    """
-    # Try to create the directory. Will have no effect if the directory already exists.
-    if not os.path.exists(path_name):
-        os.makedirs(path_name, exist_ok=True)
+from utils import prepare_dir
 
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
