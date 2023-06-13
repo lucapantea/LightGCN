@@ -351,12 +351,21 @@ class Loader(BasicDataset):
                 # adj_mat = adj_mat + sp.eye(adj_mat.shape[0])
                 
                 rowsum = np.array(adj_mat.sum(axis=1))
-                d_inv = np.power(rowsum, -0.5).flatten()
+
+                # L1 normalization
+                exponent = -1 if self.config['l1'] else -0.5
+                d_inv = np.power(rowsum, exponent).flatten()
                 d_inv[np.isinf(d_inv)] = 0.
                 d_mat = sp.diags(d_inv)
-                
-                norm_adj = d_mat.dot(adj_mat)
-                norm_adj = norm_adj.dot(d_mat)
+
+                # left and symmetric normalization
+                if self.config['side_norm'] != 'r':
+                    norm_adj = d_mat.dot(adj_mat)
+
+                # right and symmetric normalization
+                if self.config['side_norm'] != 'l':
+                    norm_adj = norm_adj.dot(d_mat)
+
                 norm_adj = norm_adj.tocsr()
                 end = time()
                 print(f"costing {end-s}s, saved norm_mat...")
