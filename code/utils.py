@@ -112,7 +112,10 @@ def getFileName():
     if world.model_name not in register.MODELS:
         raise NotImplementedError(f'Model name \'{world.model_name}\' not recognized.')
     num_layers = world.config['lightGCN_n_layers']
-    filename = f"{world.model_name}_{world.dataset}" \
+    single = '-single' if world.config['single'] else ''
+    l1 = f'-L1' if world.config['l1'] else ''
+    side_norm = f'-{world.config["side_norm"].upper()}' if world.config["side_norm"].upper() in ['L', 'R'] else ''
+    filename = f"{world.model_name}{single}{l1}{side_norm}_{world.dataset}" \
                f"{f'_layers-{num_layers}' if world.model_name == 'lgn' else ''}" \
                f"_latent_dim-{world.config['latent_dim_rec']}" \
                f"_bpr_batch_size-{world.config['bpr_batch_size']}" \
