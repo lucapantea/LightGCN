@@ -20,12 +20,16 @@ ROOT_PATH = os.path.dirname(os.path.dirname(__file__))
 CODE_PATH = join(ROOT_PATH, 'code')
 DATA_PATH = join(ROOT_PATH, 'data')
 BOARD_PATH = join(CODE_PATH, 'runs')
+EMBS_PATH = join(CODE_PATH, 'embs')
 FILE_PATH = join(CODE_PATH, 'checkpoints')
 sys.path.append(join(CODE_PATH, 'sources'))
 
 
 if not os.path.exists(FILE_PATH):
     os.makedirs(FILE_PATH, exist_ok=True)
+
+if not os.path.exists(EMBS_PATH):
+    os.makedirs(EMBS_PATH, exist_ok=True)
 
 
 config = {}
@@ -50,6 +54,8 @@ config['topks'] = eval(args.topks)
 config['single'] = args.single
 config['l1'] = args.l1
 config['side_norm'] = args.side_norm
+config['embs_path'] = EMBS_PATH
+config['save_embs'] = args.save_embs
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")
