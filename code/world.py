@@ -13,6 +13,16 @@ from parse import parse_args
 from os.path import join
 import multiprocessing
 
+def prepare_dir(path_name):
+    """
+    This function is used to create the directories needed to output a path. If the directories already exist, the
+    function continues.
+    """
+    # Try to create the directory. Will have no effect if the directory already exists.
+    if not os.path.exists(path_name):
+        os.makedirs(path_name, exist_ok=True)
+
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 args = parse_args()
 
@@ -24,13 +34,8 @@ EMBS_PATH = join(CODE_PATH, 'embs')
 FILE_PATH = join(CODE_PATH, 'checkpoints')
 sys.path.append(join(CODE_PATH, 'sources'))
 
-
-if not os.path.exists(FILE_PATH):
-    os.makedirs(FILE_PATH, exist_ok=True)
-
-if not os.path.exists(EMBS_PATH):
-    os.makedirs(EMBS_PATH, exist_ok=True)
-
+for path_name in [FILE_PATH, EMBS_PATH]:
+    prepare_dir(path_name)
 
 config = {}
 all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book']
