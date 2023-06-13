@@ -44,6 +44,8 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=2020, help='random seed')
     parser.add_argument('--model', type=str, default='lgn', help='rec-model, support [mf, lgn]')
     parser.add_argument('--single', action='store_true', help='whether we use single LightGCN to test, (default False)')
+    parser.add_argument('--save_embs', action='store_true', help='whether or not to store the embedding matrices, '
+                                                                 '(default False)')
     parser.add_argument('--l1', action='store_true', help='whether we use L1 norm for adj matrix, (default False)')
     parser.add_argument('--side_norm', type=str, default='both',
                         help="available norms: [l, r, both]")

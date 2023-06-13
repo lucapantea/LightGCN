@@ -11,7 +11,6 @@ import world
 import torch
 from dataloader import BasicDataset
 from torch import nn
-import numpy as np
 
 
 class BasicModel(nn.Module):    
@@ -114,6 +113,7 @@ class LightGCN(BasicModel):
             print('use pretarined data')
         self.f = nn.Sigmoid()
         self.Graph = self.dataset.getSparseGraph()
+        self.embs = None
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
         # print("save_txt")
@@ -166,11 +166,15 @@ class LightGCN(BasicModel):
                 all_emb = torch.sparse.mm(g_droped, all_emb)
             embs.append(all_emb)
         embs = torch.stack(embs, dim=1)
-        #print(embs.size())
+
+        if self.config['save_embs']:
+            self.embs = embs
+
         if self.config['single']:
             light_out = embs[:, -1, :].squeeze()
         else:
             light_out = torch.mean(embs, dim=1)
+
         users, items = torch.split(light_out, [self.num_users, self.num_items])
         return users, items
     
