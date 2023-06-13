@@ -47,6 +47,7 @@ config['A_split'] = False
 config['bigdata'] = False
 config['seed'] = args.seed
 config['topks'] = eval(args.topks)
+config['single'] = args.single
 config['l1'] = args.l1
 config['side_norm'] = args.side_norm
 
