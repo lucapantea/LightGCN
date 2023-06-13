@@ -293,14 +293,6 @@ def getLabel(test_data, pred_data):
         r.append(pred)
     return np.array(r).astype('float')
 
-def prepare_dir(path_name):
-    """
-    This function is used to create the directories needed to output a path. If the directories already exist, the
-    function continues.
-    """
-    # Try to create the directory. Will have no effect if the directory already exists.
-    if not os.path.exists(path_name):
-        os.makedirs(path_name, exist_ok=True)
 
 # ====================end Metrics=============================
 # =========================================================
