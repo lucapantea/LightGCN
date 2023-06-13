@@ -2,12 +2,12 @@
 
 #SBATCH --partition=gpu_titanrtx_shared_course
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=LightGCN-Amazon-l1r1
+#SBATCH --job-name=LightGCN-Amazon-both1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
 #SBATCH --time=48:00:00
 #SBATCH --mem=64000M
-#SBATCH --output=../out/slurm_output_l1r1-norm_%x.out
+#SBATCH --output=../out/slurm_output_both1-norm_%x.out
 
 module purge
 module load 2021
@@ -29,7 +29,7 @@ for nl in "${num_layers[@]}"; do
         --seed 2020 \
         --recdim 64 \
         --bpr_batch 2048 \
-        --l1 \
-        --layer $nl
+        --layer $nl \
+        --l1
 done
 
