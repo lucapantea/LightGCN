@@ -80,7 +80,7 @@ def main():
                                 "best_epoch": epoch}
                         torch.save(ckpt, weight_file)
                         if world.config['save_embs']:
-                            for i, emb in enumerate(Recmodel.embs.unbind(dim=1)):
+                            for i, emb in enumerate(Recmodel.get_embedding_matrix().unbind(dim=1)):
                                 torch.save(emb, os.path.join(world.config['embs_path'],
                                                              f"emb_layer-{i}_{os.path.basename(weight_file)}"))
 

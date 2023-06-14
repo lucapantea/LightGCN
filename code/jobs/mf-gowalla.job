@@ -20,7 +20,7 @@ cd $HOME/LightGCN/code
 
 srun python -u main.py \
         --model "mf" \
-        --dataset "goalla" \
+        --dataset "gowalla" \
         --lr 0.001 \
         --decay 0.0001 \
         --seed 2020 \

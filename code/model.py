@@ -44,6 +44,9 @@ class PureMF(BasicModel):
         self.latent_dim = config['latent_dim_rec']
         self.f = nn.Sigmoid()
         self.__init_weight()
+
+    def get_embedding_matrix(self):
+        return torch.vstack((self.embedding_user.weight.data, self.embedding_item.weight.data)).unsqueeze(1)
         
     def __init_weight(self):
         self.embedding_user = torch.nn.Embedding(
@@ -86,7 +89,11 @@ class LightGCN(BasicModel):
         super(LightGCN, self).__init__()
         self.config = config
         self.dataset: BasicDataset = dataset
+        self.embs = None
         self.__init_weight()
+
+    def get_embedding_matrix(self):
+        return self.embs
 
     def __init_weight(self):
         self.num_users  = self.dataset.n_users
