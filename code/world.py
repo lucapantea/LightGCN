@@ -38,7 +38,7 @@ for path_name in [FILE_PATH, EMBS_PATH]:
 
 config = {}
 all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book']
-all_models = ['mf', 'lgn']
+all_models = ['mf', 'lgn', 'attention-lgn']
 # config['batch_size'] = 4096
 config['bpr_batch_size'] = args.bpr_batch
 config['latent_dim_rec'] = args.recdim

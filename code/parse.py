@@ -42,7 +42,7 @@ def parse_args():
     parser.add_argument('--multicore', type=int, default=0, help='whether we use multiprocessing or not in test')
     parser.add_argument('--pretrain', type=int, default=0, help='whether we use pretrained weight or not')
     parser.add_argument('--seed', type=int, default=2020, help='random seed')
-    parser.add_argument('--model', type=str, default='lgn', help='rec-model, support [mf, lgn]')
+    parser.add_argument('--model', type=str, default='lgn', help='rec-model, support [mf, lgn, attention-lgn]')
     parser.add_argument('--single', action='store_true', help='whether we use single LightGCN to test, (default False)')
     parser.add_argument('--save_embs', action='store_true', help='whether or not to store the embedding matrices, '
                                                                  '(default False)')
