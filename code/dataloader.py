@@ -237,6 +237,7 @@ class Loader(BasicDataset):
         testUniqueUsers, testItem, testUser = [], [], []
         self.traindataSize = 0
         self.testDataSize = 0
+        self.config = config
 
         with open(train_file) as f:
             for l in f.readlines():
