@@ -359,12 +359,17 @@ class Loader(BasicDataset):
                 d_inv[np.isinf(d_inv)] = 0.
                 d_mat = sp.diags(d_inv)
 
-                # left and symmetric normalization
-                if self.config['side_norm'] != 'r':
+                # left normalization
+                if self.config['side_norm'] == 'l':
                     norm_adj = d_mat.dot(adj_mat)
 
-                # right and symmetric normalization
-                if self.config['side_norm'] != 'l':
+                # right normalization
+                elif self.config['side_norm'] == 'r':
+                    norm_adj = adj_mat.dot(d_mat)
+
+                # symmetric normalization
+                elif self.config['side_norm'] == 'r':
+                    norm_adj = d_mat.dot(adj_mat)
                     norm_adj = norm_adj.dot(d_mat)
 
                 norm_adj = norm_adj.tocsr()
