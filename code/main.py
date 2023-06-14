@@ -38,7 +38,7 @@ def main():
     # Creating the run name
     num_layers = world.config['lightGCN_n_layers']
     run_name = f"{world.model_name}_{world.dataset}" \
-               f"{f'_layers-{num_layers}' if world.model_name == 'lgn' else ''}" \
+               f"{f'_layers-{num_layers}' if world.model_name not in ['mf'] else ''}" \
                f"_latent_dim-{world.config['latent_dim_rec']}"
 
     # Initialize tensorboard and wandb
