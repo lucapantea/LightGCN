@@ -68,6 +68,8 @@ device = torch.device('cuda' if GPU else "cpu")
 CORES = multiprocessing.cpu_count() // 2
 seed = args.seed
 
+dataset = config['dataset']
+model_name = config['model']
 if config['dataset'] not in all_dataset:
     raise NotImplementedError(f"Haven't supported {config['dataset']} yet!, try {all_dataset}")
 if config['model'] not in all_models:
