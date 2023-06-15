@@ -25,4 +25,5 @@ MODELS = {
     'mf': model.PureMF,
     'lgn': model.LightGCN,
     'attention-lgn': model.AttentionLightGCN,
+    'finer-attention-lgn': model.FinerAttentionLightGCN,
 }
