@@ -5,9 +5,9 @@ import model
 from pprint import pprint
 from world import DATA_PATH
 
-if world.dataset in ['gowalla', 'yelp2018', 'amazon-book']:
+if world.config['dataset'] in ['gowalla', 'yelp2018', 'amazon-book']:
     dataset = dataloader.Loader(path=os.path.join(DATA_PATH, world.dataset))
-elif world.dataset == 'lastfm':
+elif world.config['dataset'] == 'lastfm':
     dataset = dataloader.LastFM()
 
 print('===========config================')
