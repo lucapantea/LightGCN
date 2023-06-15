@@ -60,18 +60,18 @@ config['l1'] = args.l1
 config['side_norm'] = args.side_norm
 config['embs_path'] = EMBS_PATH
 config['save_embs'] = args.save_embs
+config['dataset'] = args.dataset
+config['model'] = args.model
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")
 CORES = multiprocessing.cpu_count() // 2
 seed = args.seed
 
-dataset = args.dataset
-model_name = args.model
-if dataset not in all_dataset:
-    raise NotImplementedError(f"Haven't supported {dataset} yet!, try {all_dataset}")
-if model_name not in all_models:
-    raise NotImplementedError(f"Haven't supported {model_name} yet!, try {all_models}")
+if config['dataset'] not in all_dataset:
+    raise NotImplementedError(f"Haven't supported {config['dataset']} yet!, try {all_dataset}")
+if config['model'] not in all_models:
+    raise NotImplementedError(f"Haven't supported {config['model']} yet!, try {all_models}")
 
 TRAIN_epochs = args.epochs
 LOAD = args.load
