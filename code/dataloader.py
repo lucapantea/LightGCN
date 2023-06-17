@@ -360,15 +360,15 @@ class Loader(BasicDataset):
                 d_mat = sp.diags(d_inv)
 
                 # left normalization
-                if self.config['side_norm'] == 'l':
+                if self.config['side_norm'].lower() == 'l':
                     norm_adj = d_mat.dot(adj_mat)
 
                 # right normalization
-                elif self.config['side_norm'] == 'r':
+                elif self.config['side_norm'].lower() == 'r':
                     norm_adj = adj_mat.dot(d_mat)
 
                 # symmetric normalization
-                elif self.config['side_norm'] == 'r':
+                elif self.config['side_norm'].lower() == 'both':
                     norm_adj = d_mat.dot(adj_mat)
                     norm_adj = norm_adj.dot(d_mat)
 
