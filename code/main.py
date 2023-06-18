@@ -1,99 +1,139 @@
 import world
 import utils
-import register
 import torch
 import wandb
 import time
-import Procedure
 import os
+import procedures
 
 from os.path import join
 from tqdm import tqdm
-from torch.utils.tensorboard import SummaryWriter
-from register import dataset
+from pprint import pprint
+from models import PureMF
+from models import LightGCN
+
+
+MODELS = {
+    "mf": PureMF,
+    "lgn": LightGCN
+}
+
 
 def main():
     # Set seed
     utils.set_seed(world.seed)
 
     # Initialize model
-    Recmodel = register.MODELS[world.model_name](world.config, dataset)
-    Recmodel = Recmodel.to(world.device)
+    dataset = utils.get_dataset(world.DATA_PATH, world.dataset)
+    model = MODELS[world.model_name](
+        world.config, dataset)
+    model = model.to(world.device)
+
+    print("===========config================")
+    pprint(world.config)
+    print("cores for test:", world.CORES)
+    print("comment:", world.comment)
+    print("LOAD:", world.LOAD)
+    print("Weight path:", world.PATH)
+    print("Test Topks:", world.topks)
+    print("using bpr loss")
+    print("===========end===================")
 
     # Initialize BPR loss
-    bpr = utils.BPRLoss(Recmodel, world.config)
+    bpr = utils.BPRLoss(world.config["decay"])
+    optimizer = torch.optim.Adam(model.parameters(), lr=world.config["lr"])
+
+    if world.model_name not in MODELS:
+        raise NotImplementedError(
+            f"Model name '{world.model_name}' not recognized.")
 
     # Load pretrain weights
-    weight_file = utils.getFileName()
+    weight_file = utils.get_weights_file_name(
+        checkpoint_path=world.FILE_PATH,
+        model_name=world.model_name,
+        num_layers=world.config["lightGCN_n_layers"],
+        single=world.config["single"],
+        l1=world.config["l1"],
+        side_norm_type=world.config["side_norm"],
+        dataset=world.dataset,
+        latent_dim_rec=world.config["latent_dim_rec"],
+        batch_size=world.config["batch_size"],
+        dropout=world.config["dropout"],
+        keep_prob=world.config["keep_prob"],
+        adj_matrix_folds=world.config["adj_matrix_folds"],
+        test_u_batch_size=world.config["test_u_batch_size"],
+        lr=world.config["lr"],
+        decay=world.config["decay"],
+        seed=world.config["seed"],
+    )
     print(f"load and save to {weight_file}")
 
     if world.LOAD:
         try:
-            Recmodel.load_state_dict(torch.load(weight_file, map_location=world.device))
-            world.cprint(f"loaded model weights from {weight_file}")
+            model.load_state_dict(torch.load(
+                weight_file, map_location=world.device))
+            print(f"loaded model weights from {weight_file}")
         except FileNotFoundError:
             print(f"{weight_file} not exists, start from beginning")
-    Neg_k = 1
 
     # Creating the run name
-    num_layers = world.config['lightGCN_n_layers']
-    run_name = f"{world.model_name}_{world.dataset}" \
-               f"{f'_layers-{num_layers}' if world.model_name == 'lgn' else ''}" \
-               f"_latent_dim-{world.config['latent_dim_rec']}"
+    num_layers = world.config["lightGCN_n_layers"]
+    use_layers = f"_layers-{num_layers}" if world.model_name == "lgn" else ""
+    latent_dim_rec = world.config["latent_dim_rec"]
+    wandb_run_name = f"{world.model_name}_{world.dataset}" \
+                     f"{use_layers}" \
+                     f"_latent_dim-{latent_dim_rec}"
 
-    # Initialize tensorboard and wandb
-    tensorboard_log_dir = join(world.BOARD_PATH, time.strftime("%m-%d-%Hh%Mm%Ss-") + run_name)
+    # Initialize wandb
+    tensorboard_log_dir = join(
+        world.BOARD_PATH, time.strftime("%m-%d-%Hh%Mm%Ss-") + wandb_run_name)
     wandb.tensorboard.patch(root_logdir=tensorboard_log_dir)
-    wandb.init(project="recsys", entity="msc-ai", config=world.config,
-               reinit=True, name=run_name)
-    wandb.watch(Recmodel)
-
-    # Initialize tensorboard writer
-    if world.tensorboard:
-        w: SummaryWriter = SummaryWriter(tensorboard_log_dir)
-    else:
-        w = None
-        world.cprint("Tensorboard not enabled.")
+    wandb.init(project=world.WANDB_PROJECT, entity=world.WANDB_ENTITY, 
+               config=world.config, reinit=True, name=wandb_run_name)
+    wandb.watch(model)
 
     # Saving the best model instance based on set variable
-    save_model_by = 'ndcg'  # metrics: precision, recall, ndcg
-    best_test_metric = float('-inf')
+    save_model_by = world.config["save_model_by"]
+    best_test_metric = float("-inf")
 
     try:
         print("Beginning training...")
         with tqdm(range(world.TRAIN_epochs), desc="Epoch") as pbar:
             for epoch in pbar:
-                avg_loss, sampling_time = Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k, w=w)
+                avg_loss, sampling_time = procedures.train_pairwise(
+                    dataset, model, bpr, optimizer)
                 wandb.log({"BPR Loss": avg_loss, "Epoch": epoch})
 
                 # Evaluate the model on the validation set
                 if epoch % 10 == 0:
-                    test_metrics = Procedure.Test(dataset, Recmodel, epoch, w, world.config['multicore'])
+                    test_metrics = procedures.eval_pairwise(
+                        dataset, model, world.config['multicore'])
                     wandb.log({**test_metrics, 'Epoch': epoch})
 
                     if test_metrics[save_model_by] > best_test_metric:
                         best_test_metric = test_metrics[save_model_by]
                         wandb.run.summary[f"best_{save_model_by}"] = best_test_metric
-                        ckpt = {"state_dict": Recmodel.state_dict(),
-                                "optimizer_state_dict": bpr.opt.state_dict(),
-                                f"best_{save_model_by}": best_test_metric,
-                                "best_epoch": epoch}
+                        ckpt = {
+                            "state_dict": model.state_dict(),
+                            "optimizer_state_dict": optimizer.state_dict(),
+                            f"best_{save_model_by}": best_test_metric,
+                            "best_epoch": epoch
+                        }
                         torch.save(ckpt, weight_file)
                         if world.config['save_embs']:
-                            for i, emb in enumerate(Recmodel.get_embedding_matrix().unbind(dim=1)):
+                            for i, emb in enumerate(model.get_embedding_matrix().unbind(dim=1)):
                                 torch.save(emb, os.path.join(world.config['embs_path'],
                                                              f"emb_layer-{i}_{os.path.basename(weight_file)}"))
 
                 # Update the progress bar
-                pbar.set_postfix({'BPR loss': f'{avg_loss:.3f}', 'sampling time': sampling_time})
+                pbar.set_postfix(
+                    {'BPR loss': f'{avg_loss:.3f}', 'sampling time': sampling_time})
 
     except KeyboardInterrupt:
         # Training can be safely interrupted with Ctrl+C
         print('Exiting training early because of keyboard interrupt.')
     finally:
         wandb.finish()
-        if world.tensorboard:
-            w.close()
 
 
 if __name__ == '__main__':
