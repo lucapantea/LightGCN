@@ -5,7 +5,7 @@
 #SBATCH --job-name=LightGCN-LastFM
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --mem=64000M
 #SBATCH --output=../out/slurm_output_%x.out
 
