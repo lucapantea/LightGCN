@@ -83,6 +83,13 @@ class LastFM(BasicDataset):
         trainData = pd.read_table(join(path, 'data1.txt'), header=None)
         # print(trainData.head())
         testData  = pd.read_table(join(path, 'test1.txt'), header=None)
+
+        # filter out entries from the test data that contain node ids not present in the train data
+        unique_user_ids = set(trainData.iloc[:, 0])
+        unique_item_ids = set(testData.iloc[:, 1])
+        testData = testData[(testData.iloc[:, 0].isin(unique_user_ids)) & (testData.iloc[:, 1].isin(unique_item_ids))]
+
+
         # print(testData.head())
         trustNet  = pd.read_table(join(path, 'trustnetwork.txt'), header=None).to_numpy()
         # print(trustNet[:5])
@@ -116,6 +123,7 @@ class LastFM(BasicDataset):
             neg = allItems - pos
             self.allNeg.append(np.array(list(neg)))
         self.__testDict = self.__build_test()
+
 
     @property
     def n_users(self):

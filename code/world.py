@@ -61,6 +61,7 @@ config['side_norm'] = args.side_norm
 config['embs_path'] = EMBS_PATH
 config['save_embs'] = args.save_embs
 config['dataset'] = args.dataset
+# config['dataset'] = 'lastfm'
 config['model'] = args.model
 
 GPU = torch.cuda.is_available()
