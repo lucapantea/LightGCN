@@ -188,5 +188,6 @@ wandb
 runs
 checkpoints
 sources
-data
 embs
+/data/trial_amazon-electro/
+/data/trial_movielens/
