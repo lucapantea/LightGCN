@@ -60,8 +60,8 @@ config['l1'] = args.l1
 config['side_norm'] = args.side_norm
 config['embs_path'] = EMBS_PATH
 config['save_embs'] = args.save_embs
-# config['dataset'] = args.dataset
-config['dataset'] = 'lastfm'
+config['dataset'] = args.dataset
+# config['dataset'] = 'amazon-book'
 config['model'] = args.model
 
 GPU = torch.cuda.is_available()

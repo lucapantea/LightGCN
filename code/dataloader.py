@@ -203,9 +203,7 @@ class LastFM(BasicDataset):
         for user in users:
             negItems.append(self.allNeg[user])
         return negItems
-            
-    
-    
+
     def __getitem__(self, index):
         user = self.trainUniqueUsers[index]
         # return user_id and the positive items of the user
@@ -219,6 +217,7 @@ class LastFM(BasicDataset):
     
     def __len__(self):
         return len(self.trainUniqueUsers)
+
 
 class Loader(BasicDataset):
     """

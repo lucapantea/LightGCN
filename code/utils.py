@@ -29,6 +29,8 @@ except:
     world.cprint("Cpp extension not loaded")
     sample_ext = False
 
+sample_ext = False
+
 
 class BPRLoss:
     def __init__(self,
@@ -55,7 +57,10 @@ def UniformSample_original(dataset, neg_ratio=1):
     dataset: BasicDataset
     allPos = dataset.allPos
     start = time()
+    # sample_ext = False
+
     if sample_ext:
+        print('t')
         S = sampling.sample_negative(dataset.n_users, dataset.m_items,
                                      dataset.trainDataSize, allPos, neg_ratio)
     else:
