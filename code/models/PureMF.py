@@ -44,22 +44,6 @@ class PureMF(BasicModel):
 
         return self.sigmoid(scores)
 
-    def bpr_loss(self, users, pos, neg):
-        users_emb = self.embedding_user(users.long())
-        pos_emb = self.embedding_item(pos.long())
-        neg_emb = self.embedding_item(neg.long())
-
-        pos_scores = torch.sum(users_emb * pos_emb, dim=1)
-        neg_scores = torch.sum(users_emb * neg_emb, dim=1)
-
-        loss = torch.mean(nn.functional.softplus(neg_scores - pos_scores))
-
-        reg_loss = (1 / 2) * (users_emb.norm(2).pow(2) +
-                              pos_emb.norm(2).pow(2) +
-                              neg_emb.norm(2).pow(2)) / len(users)
-
-        return loss, reg_loss
-
     def forward(self, users, items):
         users = users.long()
         items = items.long()
