@@ -16,6 +16,18 @@ from tqdm import tqdm
 
 
 def train_pairwise(dataset, model, loss_class, optimizer):
+    """
+    Train the model using pairwise ranking loss.
+
+    Args:
+        dataset (BasicDataset): The training dataset.
+        model (BasicModel): The model to train.
+        loss_class: The loss function class.
+        optimizer: The optimizer for model parameters.
+
+    Returns:
+        tuple: A tuple containing the average loss value and timing information.
+    """
     model.train()
 
     # uniform sample for bpr

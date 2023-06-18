@@ -19,6 +19,15 @@ from tqdm import tqdm
 
 
 def test_one_batch(X):
+    """
+    Calculate precision, recall, and NDCG for a batch of user-item pairs.
+
+    Args:
+        X (tuple): A tuple containing sorted items and ground truth for a batch of user-item pairs.
+
+    Returns:
+        dict: Dictionary containing recall, precision, and NDCG values for different top-k recommendations.
+    """
     sorted_items = X[0].numpy()
     ground_truth = X[1]
 
@@ -39,6 +48,17 @@ def test_one_batch(X):
 
 
 def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
+    """
+    Evaluate the pairwise ranking performance of the model on the test dataset.
+
+    Args:
+        dataset (BasicDataset): The test dataset.
+        model (BasicModel): The trained model.
+        multicore (int): Number of CPU cores to use for parallel processing.
+
+    Returns:
+        dict: Dictionary containing recall, precision, and NDCG values for different top-k recommendations.
+    """
     batch_size = world.config["test_u_batch_size"]
     test_dict = dataset.test_dict
 
