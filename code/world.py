@@ -37,7 +37,7 @@ for path_name in [FILE_PATH, EMBS_PATH]:
     prepare_dir(path_name)
 
 config = {}
-all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book']
+all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book', 'amazon-beauty', 'amazon-movies', 'amazon-cds', 'citeulike']
 all_models = ['mf', 'lgn']
 # config['batch_size'] = 4096
 config['bpr_batch_size'] = args.bpr_batch
@@ -61,7 +61,6 @@ config['side_norm'] = args.side_norm
 config['embs_path'] = EMBS_PATH
 config['save_embs'] = args.save_embs
 config['dataset'] = args.dataset
-# config['dataset'] = 'amazon-book'
 config['model'] = args.model
 
 GPU = torch.cuda.is_available()
