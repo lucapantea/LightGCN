@@ -6,8 +6,6 @@ LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 
 @author: Jianbai Ye (gusye@mail.ustc.edu.cn)
 """
-from models import BasicModel
-from torch import optim
 import torch
 
 
@@ -34,10 +32,8 @@ class BPRLoss(object):
         neg_scores = torch.mul(users_embeddings, neg_items_embeddings)
         neg_scores = torch.sum(neg_scores, dim=1)
 
-        loss = torch.mean(
-            torch.nn.functional.softplus(neg_scores - pos_scores))
+        loss = torch.mean(torch.nn.functional.softplus(neg_scores - pos_scores))
         reg_loss *= self.weight_decay
-
         loss += reg_loss
 
         return loss

@@ -1,11 +1,9 @@
-from .BPRLoss import BPRLoss
 from .metrics import *
 from .samplings import *
 from .Timer import Timer
-from datasets import BasicDataset
+from datasets import BasicDataset, LastFM, Loader
 
 import os
-import datasets
 import numpy as np
 import torch
 import world
@@ -37,7 +35,8 @@ def get_weights_file_name(
     test_u_batch_size: int,
     lr: float,
     decay: float,
-    seed: int
+    seed: int,
+    **kwargs
 ):
     single = "-single" if single else ""
     l1 = "-L1" if l1 else ""
@@ -57,15 +56,33 @@ def get_weights_file_name(
         f"_test_u_batch_size-{test_u_batch_size}" \
         f"_lr-{lr}" \
         f"_decay-{decay}" \
-        f"_seed-{seed}.pt"
+        f"_seed-{seed}"
+
+    # Append additional parameters
+    for key, value in kwargs.items():
+        file_name += f"_{key}-{value}"
+
+    file_name += ".pt"
 
     return os.path.join(checkpoint_path, file_name)
+
+def get_wandb_run_name(model_name, dataset, num_layers, latent_dim_rec, **kwargs):
+    use_layers = f"_layers-{num_layers}" if world.model_name != "mf" else ""
+    wandb_run_name = f"{model_name}_{dataset}" \
+                     f"{use_layers}" \
+                     f"_latent_dim-{latent_dim_rec}"
+
+    # Append additional parameters
+    for key, value in kwargs.items():
+        wandb_run_name += f"_{key}-{value}"
+
+    return wandb_run_name
 
 
 def get_dataset(data_path: str, dataset: BasicDataset):
     if dataset in ["gowalla", "yelp2018", "amazon-book"]:
-        return datasets.Loader(
+        return Loader(
             config=world.config,
             path=os.path.join(data_path, dataset))
     elif dataset == "lastfm":
-        return datasets.LastFM()
+        return LastFM()

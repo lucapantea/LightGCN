@@ -55,7 +55,8 @@ class LightGCN(BasicModel):
 
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
-    def __dropout_x(self, x, keep_prob):
+    @staticmethod
+    def __dropout_x(x, keep_prob):
         size = x.size()
         index = x.indices().t()
         values = x.values()

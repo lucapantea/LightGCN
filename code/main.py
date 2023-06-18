@@ -2,15 +2,13 @@ import world
 import utils
 import torch
 import wandb
-import time
 import os
 import procedures
 
-from os.path import join
 from tqdm import tqdm
 from pprint import pprint
-from models import PureMF
-from models import LightGCN
+from models import LightGCN, PureMF
+from losses import BPRLoss
 
 
 MODELS = {
@@ -23,11 +21,17 @@ def main():
     # Set seed
     utils.set_seed(world.seed)
 
+    if world.model_name not in MODELS:
+        raise NotImplementedError(f"Model name '{world.model_name}' not recognized.")
+
     # Initialize model
     dataset = utils.get_dataset(world.DATA_PATH, world.dataset)
-    model = MODELS[world.model_name](
-        world.config, dataset)
+    model = MODELS[world.model_name](world.config, dataset)
     model = model.to(world.device)
+
+    # Initialize BPR loss
+    criterion = BPRLoss(weight_decay=world.config["decay"])
+    optimizer = torch.optim.Adam(model.parameters(), lr=world.config["lr"])
 
     print("===========config================")
     pprint(world.config)
@@ -36,18 +40,10 @@ def main():
     print("LOAD:", world.LOAD)
     print("Weight path:", world.PATH)
     print("Test Topks:", world.topks)
-    print("using bpr loss")
+    print("Loss function:", criterion.__class__)
     print("===========end===================")
 
-    # Initialize BPR loss
-    bpr = utils.BPRLoss(world.config["decay"])
-    optimizer = torch.optim.Adam(model.parameters(), lr=world.config["lr"])
-
-    if world.model_name not in MODELS:
-        raise NotImplementedError(
-            f"Model name '{world.model_name}' not recognized.")
-
-    # Load pretrain weights
+    # Get the checkpoint filename
     weight_file = utils.get_weights_file_name(
         checkpoint_path=world.FILE_PATH,
         model_name=world.model_name,
@@ -65,8 +61,9 @@ def main():
         lr=world.config["lr"],
         decay=world.config["decay"],
         seed=world.config["seed"],
+        # Extra weight filename parameters are now supported.
     )
-    print(f"load and save to {weight_file}")
+    print(f"Loading and saving to {weight_file}")
 
     if world.LOAD:
         try:
@@ -77,17 +74,15 @@ def main():
             print(f"{weight_file} not exists, start from beginning")
 
     # Creating the run name
-    num_layers = world.config["lightGCN_n_layers"]
-    use_layers = f"_layers-{num_layers}" if world.model_name == "lgn" else ""
-    latent_dim_rec = world.config["latent_dim_rec"]
-    wandb_run_name = f"{world.model_name}_{world.dataset}" \
-                     f"{use_layers}" \
-                     f"_latent_dim-{latent_dim_rec}"
+    wandb_run_name = utils.get_wandb_run_name(
+        model_name=world.model_name,
+        dataset=world.dataset,
+        num_layers=world.config["lightGCN_n_layers"],
+        latent_dim_rec=world.config["latent_dim_rec"]
+        # Extra wandb filename parameters are now supported.
+    )
 
     # Initialize wandb
-    tensorboard_log_dir = join(
-        world.BOARD_PATH, time.strftime("%m-%d-%Hh%Mm%Ss-") + wandb_run_name)
-    wandb.tensorboard.patch(root_logdir=tensorboard_log_dir)
     wandb.init(project=world.WANDB_PROJECT, entity=world.WANDB_ENTITY, 
                config=world.config, reinit=True, name=wandb_run_name)
     wandb.watch(model)
@@ -101,7 +96,7 @@ def main():
         with tqdm(range(world.TRAIN_epochs), desc="Epoch") as pbar:
             for epoch in pbar:
                 avg_loss, sampling_time = procedures.train_pairwise(
-                    dataset, model, bpr, optimizer)
+                    dataset, model, criterion, optimizer)
                 wandb.log({"BPR Loss": avg_loss, "Epoch": epoch})
 
                 # Evaluate the model on the validation set
