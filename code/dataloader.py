@@ -70,7 +70,7 @@ class BasicDataset(Dataset):
 class LastFM(BasicDataset):
     """
     Dataset type for pytorch \n
-    Incldue graph information
+    Include graph information
     LastFM dataset
     """
     def __init__(self, path="../data/lastfm"):
@@ -89,8 +89,6 @@ class LastFM(BasicDataset):
         unique_item_ids = set(testData.iloc[:, 1])
         testData = testData[(testData.iloc[:, 0].isin(unique_user_ids)) & (testData.iloc[:, 1].isin(unique_item_ids))]
 
-
-        # print(testData.head())
         trustNet  = pd.read_table(join(path, 'trustnetwork.txt'), header=None).to_numpy()
         # print(trustNet[:5])
         trustNet -= 1
@@ -250,6 +248,8 @@ class Loader(BasicDataset):
         with open(train_file) as f:
             for l in f.readlines():
                 if len(l) > 0:
+
+                    l = l.replace('"', '')
                     l = l.strip('\n').split(' ')
                     items = [int(i) for i in l[1:]]
                     uid = int(l[0])

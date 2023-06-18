@@ -8,7 +8,9 @@ from world import DATA_PATH
 if world.dataset in ['gowalla', 'yelp2018', 'amazon-book']:
     dataset = dataloader.Loader(path=os.path.join(DATA_PATH, world.dataset))
 elif world.dataset == 'lastfm':
-    dataset = dataloader.LastFM()
+    # dataset = dataloader.LastFM()
+    dataset = dataloader.Loader(path=os.path.join(DATA_PATH, world.dataset))
+
 
 print('===========config================')
 pprint(world.config)
