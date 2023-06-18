@@ -2,6 +2,7 @@ from .metrics import *
 from .samplings import *
 from .Timer import Timer
 from datasets import BasicDataset, LastFM, Loader
+from optimization import create_optimizer, create_scheduler
 
 import os
 import numpy as np

@@ -6,6 +6,7 @@ LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 
 @author: Jianbai Ye (gusye@mail.ustc.edu.cn)
 """
+import json
 import argparse
 
 all_datasets = ["lastfm", "gowalla", "yelp2018", "amazon-book"]
@@ -59,4 +60,14 @@ def parse_args():
     parser.add_argument("--save_model_by", type=str, default="ndcg",
                         help="available metrics: [ndcg, recall, precision]")
 
+    # Optimization
+    parser.add_argument("--optimizer", type=str, default="adam",
+                        help="optimizer to use for training")
+    parser.add_argument("--scheduler", type=str, default="step_lr",
+                        help="scheduler to use for adjusting learning rate")
+    parser.add_argument("--scheduler_params", type=json.loads, default={},
+                        help="additional parameters for the scheduler in JSON format")
+
     return parser.parse_args()
+
+
