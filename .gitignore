@@ -189,5 +189,3 @@ runs
 checkpoints
 sources
 embs
-/data/trial_amazon-electro/
-/data/trial_movielens/
