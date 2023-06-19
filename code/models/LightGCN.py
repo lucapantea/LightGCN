@@ -28,6 +28,9 @@ def compute_random_walk_diffusion(adjacency_matrix, alpha=0.1, num_steps=1):
     row_sums = adjacency_matrix.sum(dim=1)
     transition_matrix = adjacency_matrix / row_sums.view(-1, 1)
 
+    # Move transition matrix to the same device as adjacency matrix
+    transition_matrix = transition_matrix.to(adjacency_matrix.device)
+
     # Compute the random walk diffusion weights
     diffusion_weights = torch.eye(adjacency_matrix.size(0))  # Initialize with an identity matrix
     for _ in range(num_steps):
