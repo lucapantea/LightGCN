@@ -32,11 +32,10 @@ def compute_random_walk_diffusion(adjacency_matrix, alpha=0.1, num_steps=1):
     transition_matrix = transition_matrix.to(adjacency_matrix.device)
 
     # Compute the random walk diffusion weights
-    diffusion_weights = torch.eye(adjacency_matrix.size(0))  # Initialize with an identity matrix
-    diffusion_weights = diffusion_weights.to(adjacency_matrix.device)
+    diffusion_weights = torch.eye(adjacency_matrix.size(0)).to(adjacency_matrix.device)  # Initialize with an identity matrix
 
     for _ in range(num_steps):
-        diffusion_weights = alpha * transition_matrix @ diffusion_weights + (1 - alpha) * torch.eye(adjacency_matrix.size(0))
+        diffusion_weights = alpha * transition_matrix @ diffusion_weights + (1 - alpha) * torch.eye(adjacency_matrix.size(0)).to(adjacency_matrix.device)
 
     return diffusion_weights
 
