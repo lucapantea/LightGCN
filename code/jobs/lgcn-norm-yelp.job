@@ -30,7 +30,7 @@ for type in "${norm_type_wo_L1[@]}"; do
         --decay 0.0001 \
         --seed 2020 \
         --recdim 64 \
-        --bpr_batch 1024 \
+        --batch_size 1024 \
         --layer 3 \
         --side_norm "$type"
 done
@@ -44,7 +44,7 @@ for type in "${norm_type_w_L1[@]}"; do
         --decay 0.0001 \
         --seed 2020 \
         --recdim 64 \
-        --bpr_batch 1024 \
+        --batch_size 1024 \
         --layer 3 \
         --side_norm "$type" \
         --l1

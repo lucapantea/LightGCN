@@ -26,5 +26,5 @@ srun python -u main.py \
         --decay 0.0001 \
         --seed 2020 \
         --recdim 64 \
-        --bpr_batch 1024 \
+        --batch_size 1024 \
         --save_embs
