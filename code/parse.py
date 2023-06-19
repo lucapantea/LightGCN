@@ -10,7 +10,7 @@ import json
 import argparse
 
 all_datasets = ["lastfm", "gowalla", "yelp2018", "amazon-book"]
-all_models = ["mf", "lgn"]
+all_models = ["mf", "lgn", "sdp-a-lgn", "w-sdp-a-lgn"]
 
 
 def parse_args():
@@ -67,6 +67,10 @@ def parse_args():
                         help="scheduler to use for adjusting learning rate")
     parser.add_argument("--scheduler_params", type=json.loads, default={},
                         help="additional parameters for the scheduler in JSON format")
+
+    # Attention
+    parser.add_argument('--attention_dim', type=int, default=2,
+                        help='Number of dimensions for the attention projections')
 
     return parser.parse_args()
 
