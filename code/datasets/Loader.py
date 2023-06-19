@@ -10,6 +10,7 @@ from os.path import join
 
 class Loader(BasicDataset):
     def __init__(self, config, path):
+        super().__init__()
         print(f"loading [{path}]")
 
         self.split = config["A_split"]
