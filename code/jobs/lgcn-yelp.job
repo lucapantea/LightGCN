@@ -2,10 +2,10 @@
 
 #SBATCH --partition=gpu_titanrtx_shared_course
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=LightGCN-Yelp
+#SBATCH --job-name=LightGCN-Yelp-Refactored
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --mem=32000M
 #SBATCH --output=../out/slurm_output_%x.out
 
@@ -28,7 +28,7 @@ for nl in "${num_layers[@]}"; do
         --decay 0.0001 \
         --seed 2020 \
         --recdim 64 \
-        --bpr_batch 1024 \
+        --batch_size 1024 \
         --layer $nl
 done
 

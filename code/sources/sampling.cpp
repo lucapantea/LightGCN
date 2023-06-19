@@ -63,7 +63,7 @@ py::array_t<int> sample_negative_ByUser(std::vector<int> users, int item_num, st
     py::buffer_info buf_S = S_array.request();
     int *ptr = (int *)buf_S.ptr;
 
-    for (int user_i = 0; user_i < users.size(); user_i++)
+    for (int user_i = 0; user_i < (int)users.size(); user_i++)
     {
         int user = users[user_i];
         std::vector<int> pos_item = allPos[user];
@@ -95,7 +95,6 @@ using namespace py::literals;
 PYBIND11_MODULE(sampling, m)
 {
     srand(time(0));
-    // srand(2020);
     m.doc() = "example plugin";
     m.def("randint", &randint_, "generate int between [0 end]", "end"_a);
     m.def("seed", &set_seed, "set random seed", "seed"_a);

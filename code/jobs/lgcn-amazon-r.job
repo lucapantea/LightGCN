@@ -28,7 +28,7 @@ for nl in "${num_layers[@]}"; do
         --decay 0.0001 \
         --seed 2020 \
         --recdim 64 \
-        --bpr_batch 2048 \
+        --batch_size 2048 \
         --layer $nl \
         --side_norm "r"
 done
