@@ -5,7 +5,7 @@ import model
 from pprint import pprint
 from world import DATA_PATH
 
-if world.dataset in ['gowalla', 'yelp2018', 'amazon-book', 'amazon-beauty', 'amazon-movies', 'amazon-cds', 'citeulike']:
+if world.dataset in ['gowalla', 'yelp2018', 'amazon-book', 'amazon-beauty', 'amazon-movies', 'amazon-cds', 'amazon-electro', 'movielens', 'citeulike']:
     dataset = dataloader.Loader(path=os.path.join(DATA_PATH, world.dataset))
 elif world.dataset == 'lastfm':
     dataset = dataloader.LastFM()
