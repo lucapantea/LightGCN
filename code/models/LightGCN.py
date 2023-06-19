@@ -9,10 +9,31 @@ LightGCN: Simplifying and Powering graph Convolution Network for Recommendation
 Define models here
 """
 from .BasicModel import BasicModel
-from datasets import BasicDataset
 from torch import nn
-
 import torch
+
+
+import sys
+sys.path.append('../')
+from datasets.BasicDataset import BasicDataset
+
+
+def compute_random_walk_diffusion(adjacency_matrix, alpha=0.1, num_steps=1):
+    '''Computes diffusion weights for the random walk diffusion'''
+
+    # Convert adjacency matrix to dense PyTorch tensor
+    adjacency_matrix = adjacency_matrix.to_dense()
+
+    # Normalize the adjacency matrix to get the transition matrix
+    row_sums = adjacency_matrix.sum(dim=1)
+    transition_matrix = adjacency_matrix / row_sums.view(-1, 1)
+
+    # Compute the random walk diffusion weights
+    diffusion_weights = torch.eye(adjacency_matrix.size(0))  # Initialize with an identity matrix
+    for _ in range(num_steps):
+        diffusion_weights = alpha * transition_matrix @ diffusion_weights + (1 - alpha) * torch.eye(adjacency_matrix.size(0))
+
+    return diffusion_weights
 
 
 class LightGCN(BasicModel):
@@ -92,6 +113,10 @@ class LightGCN(BasicModel):
 
         self.sigmoid = nn.Sigmoid()
         self.graph = self.dataset.get_sparse_graph()
+
+        ### Diffusion part
+        self.diffusion_weights = compute_random_walk_diffusion(self.graph)
+        ###
         self.embs = None
 
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
@@ -149,6 +174,7 @@ class LightGCN(BasicModel):
                 side_emb = torch.cat(temp_emb, dim=0)
                 all_emb = side_emb
             else:
+                all_emb = torch.sparse.mm(self.diffusion_weights, all_emb)
                 all_emb = torch.sparse.mm(g_droped, all_emb)
             embs.append(all_emb)
         embs = torch.stack(embs, dim=1)
