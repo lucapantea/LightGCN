@@ -44,8 +44,13 @@ class ScaledDotProductAttentionLightGCN(LightGCN):
         queries, keys, values = self.prepare_attention_inputs(embs)
         attention_output = self.compute_attention(queries, keys, values)
 
+        if self.config['single']:
+            light_out = attention_output[:, -1, :].squeeze()
+        else:
+            light_out = torch.mean(attention_output, dim=1)
+
         all_users_embeddings, all_items_embeddings = torch.split(
-            attention_output[:, -1, :], [self.num_users, self.num_items])
+            light_out, [self.num_users, self.num_items])
 
         return all_users_embeddings, all_items_embeddings
 
