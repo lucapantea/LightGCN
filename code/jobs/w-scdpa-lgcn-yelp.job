@@ -2,7 +2,7 @@
 
 #SBATCH --partition=gpu_titanrtx_shared_course
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=LightGCN-Gowalla-WSDPA
+#SBATCH --job-name=LightGCN-YELP-WSDPA
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
 #SBATCH --time=48:00:00
@@ -26,7 +26,7 @@ for ad in "${attention_dims[@]}"; do
         srun python -u main.py \
             --model "w-sdp-a-lgn" \
             --attention_dim $ad \
-            --dataset "gowalla" \
+            --dataset "yelp2018" \
             --lr 0.001 \
             --decay 0.0001 \
             --seed 2020 \
