@@ -12,6 +12,29 @@ import torch
 from dataloader import BasicDataset
 from torch import nn
 
+import torch
+
+class LightGCNDiffusionLayer(torch.nn.Module):
+    def __init__(self, device, num_diff_steps=10, c=0.15):
+        super(LightGCNDiffusionLayer, self).__init__()
+        self.device = device
+        self.num_diff_steps = num_diff_steps
+        self.c = c
+
+    def forward(self, adj_matrix, embeddings):
+        num_nodes = embeddings.size(0)
+        diffused_embeddings = embeddings.clone()
+        for _ in range(self.num_diff_steps):
+            restart_embeddings = (1 - self.c) * embeddings
+            diffused_embeddings = self.diffusion_step(adj_matrix, diffused_embeddings, restart_embeddings)
+            # Normalize the embeddings
+            diffused_embeddings = torch.nn.functional.normalize(diffused_embeddings, p=2, dim=1)
+        return diffused_embeddings
+
+    def diffusion_step(self, adj_matrix, feats, restart_feats):
+        diffused_feats = torch.sparse.mm(adj_matrix, feats)
+        return restart_feats + self.c * diffused_feats
+
 
 class BasicModel(nn.Module):    
     def __init__(self):
@@ -122,8 +145,10 @@ class LightGCN(BasicModel):
         self.Graph = self.dataset.getSparseGraph()
         self.embs = None
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
+        self.diffusion_layer = LightGCNDiffusionLayer(device=world.device)
 
-        # print("save_txt")
+
+    # print("save_txt")
     def __dropout_x(self, x, keep_prob):
         size = x.size()
         index = x.indices().t()
@@ -151,7 +176,8 @@ class LightGCN(BasicModel):
         users_emb = self.embedding_user.weight
         items_emb = self.embedding_item.weight
         all_emb = torch.cat([users_emb, items_emb])
-        #   torch.split(all_emb , [self.num_users, self.num_items])
+
+    #   torch.split(all_emb , [self.num_users, self.num_items])
         embs = [all_emb]
         if self.config['dropout']:
             if self.training:
@@ -160,8 +186,11 @@ class LightGCN(BasicModel):
             else:
                 g_droped = self.Graph        
         else:
-            g_droped = self.Graph    
-        
+            g_droped = self.Graph
+
+        # Perform diffusion
+        all_emb = self.diffusion_layer(g_droped, all_emb)
+
         for layer in range(self.n_layers):
             if self.A_split:
                 temp_emb = []
