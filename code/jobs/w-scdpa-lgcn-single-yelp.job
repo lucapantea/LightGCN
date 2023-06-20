@@ -33,7 +33,6 @@ for ad in "${attention_dims[@]}"; do
             --seed 2020 \
             --recdim 64 \
             --batch_size 1024 \
-            --save_embs \
             --layer $nl
     done
 done
