@@ -18,7 +18,7 @@ from models import BasicModel
 from tqdm import tqdm
 
 
-def test_one_batch(X):
+def test_one_batch(X, item_embeddings):
     """
     Calculate precision, recall, and NDCG for a batch of user-item pairs.
 
@@ -43,7 +43,9 @@ def test_one_batch(X):
     return {
         "recall": np.array(recall),
         "precision": np.array(precision),
-        "ndcg": np.array(ndcg)
+        "ndcg": np.array(ndcg),
+        "diversity": utils.mean_intra_list_distance(recommendation_lists=sorted_items,
+                                                    item_embeddings=item_embeddings)
     }
 
 
@@ -71,7 +73,8 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
     results = {
         "precision": np.zeros(len(world.topks)),
         "recall": np.zeros(len(world.topks)),
-        "ndcg": np.zeros(len(world.topks))
+        "ndcg": np.zeros(len(world.topks)),
+        "diversity": 0.
     }
 
     with torch.no_grad():
@@ -113,21 +116,26 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
 
         X = zip(rating_list, ground_truth_list)
 
+        # Perform forward pass of the model to obtain the item embeddings
+        _, item_embeddings = model()
+
         if multicore:
-            pre_results = pool.map(test_one_batch, X)
+            pre_results = pool.map(test_one_batch, X, item_embeddings)
         else:
             pre_results = []
-            for x in X:
-                pre_results.append(test_one_batch(x))
+            for i, x in enumerate(X):
+                pre_results.append(test_one_batch(x, item_embeddings))
 
         for result in pre_results:
             results["recall"] += result["recall"]
             results["precision"] += result["precision"]
             results["ndcg"] += result["ndcg"]
+            results['diversity'] += result["diversity"]
 
         results["recall"] /= float(len(users))
         results["precision"] /= float(len(users))
         results["ndcg"] /= float(len(users))
+        results["diversity"] /= float(len(users))
 
         if multicore:
             pool.close()

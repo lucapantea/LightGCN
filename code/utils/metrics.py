@@ -6,8 +6,31 @@ LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 
 @author: Jianbai Ye (gusye@mail.ustc.edu.cn)
 """
+import torch
 import numpy as np
 from sklearn.metrics import roc_auc_score
+
+
+def mean_intra_list_distance(recommendation_lists, item_embeddings):
+    # Get the embeddings of the recommended items
+    recommended_embeddings = item_embeddings[recommendation_lists]
+
+    # Compute pairwise distances
+    dists = torch.cdist(recommended_embeddings, recommended_embeddings, p=2)
+
+    # Since the distance matrix is symmetric, we take the upper triangular part excluding the diagonal
+    upper_triangular_part = dists.triu(diagonal=1)
+
+    # Compute the ILD
+    if recommendation_lists.shape == 3:  # batched computation
+        list_length = recommendation_lists.shape[2]
+        ILDs = upper_triangular_part.sum(dim=[2, 3]) / (list_length * (list_length - 1) / 2)
+    else:  # non-batched computation
+        list_length = recommendation_lists.shape[1]
+        ILDs = upper_triangular_part.sum(dim=[1, 2]) / (list_length * (list_length - 1) / 2)
+
+    return torch.mean(ILDs).item()
+
 
 
 def recall_precision_at_k(test_data, r, k):
