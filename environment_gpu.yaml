@@ -21,3 +21,4 @@ dependencies:
     - cppimport==22.8.2
     - tensorboard
     - wandb
+    - matplotlib
