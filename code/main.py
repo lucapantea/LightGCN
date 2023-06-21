@@ -103,7 +103,13 @@ def main():
                 if epoch % 10 == 0:
                     test_metrics = procedures.eval_pairwise(
                         dataset, model, world.config['multicore'])
-                    wandb.log({**test_metrics, 'Epoch': epoch})
+                    results = {}
+                    for i_k, k in enumerate(world.topks):
+                        results[f'Precision@{k}'] = test_metrics['precision'][i_k]
+                        results[f'Recall@{k}'] = test_metrics['recall'][i_k]
+                        results[f'NDCG@{k}'] = test_metrics['ndcg'][i_k]
+
+                    wandb.log({**results, 'Epoch': epoch})
 
                     if test_metrics[save_model_by] > best_test_metric:
                         best_test_metric = test_metrics[save_model_by]
