@@ -100,14 +100,16 @@ def main():
                 wandb.log({"BPR Loss": avg_loss, "Epoch": epoch})
 
                 # Evaluate the model on the validation set
-                if epoch % 10 == 0:
+                if epoch % 20 == 0:
                     test_metrics = procedures.eval_pairwise(
                         dataset, model, world.config['multicore'])
+
                     results = {}
                     for i_k, k in enumerate(world.topks):
                         results[f'Precision@{k}'] = test_metrics['precision'][i_k]
                         results[f'Recall@{k}'] = test_metrics['recall'][i_k]
                         results[f'NDCG@{k}'] = test_metrics['ndcg'][i_k]
+                    results['Diversity'] = test_metrics['diversity']
 
                     wandb.log({**results, 'Epoch': epoch})
 
