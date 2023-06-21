@@ -145,7 +145,7 @@ class LightGCN(BasicModel):
         self.Graph = self.dataset.getSparseGraph()
         self.embs = None
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
-        self.diffusion_layer = LightGCNDiffusionLayer(device=world.device)
+        self.diffusion_layer = LightGCNDiffusionLayer(device=world.device, num_diff_steps=5, c=0.15)
 
 
     # print("save_txt")

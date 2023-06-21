@@ -73,6 +73,8 @@ def main():
 
                     if test_metrics[save_model_by] > best_test_metric:
                         best_test_metric = test_metrics[save_model_by]
+                        # pbar.set_postfix({f'best{save_model_by}': f'{test_metrics[save_model_by]}'})
+
                         wandb.run.summary[f"best_{save_model_by}"] = best_test_metric
                         ckpt = {"state_dict": Recmodel.state_dict(),
                                 "optimizer_state_dict": bpr.opt.state_dict(),
