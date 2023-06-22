@@ -23,6 +23,7 @@ except Exception:
     print("Cpp extension not loaded")
     sample_ext = False
 
+sample_ext=False
 
 def uniform_sample_original(dataset: BasicDataset, neg_ratio=1):
     all_pos = dataset.all_pos
