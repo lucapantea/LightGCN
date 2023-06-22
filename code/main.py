@@ -113,6 +113,7 @@ def main():
                         results[f'Exploration_vs_recalln@{k}'] = test_metrics['exploration_vs_recall'][i_k, :]
                         results[f'Exploration_vs_ndcg@{k}'] = test_metrics['exploration_vs_ndcg'][i_k, :]
                     results['Diversity'] = test_metrics['diversity']
+                    results['Novelty'] = test_metrics['novelty']
 
                     wandb.log({**results, 'Epoch': epoch})
 

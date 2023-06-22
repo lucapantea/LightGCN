@@ -25,6 +25,7 @@ class Loader(BasicDataset):
         train_unique_users, train_item, train_user = [], [], []
         test_unique_users, test_item, test_user = [], [], []
         self.number_of_train_interactions = []
+        self.train_items_interacted = []
         self.train_data_size = 0
         self.test_data_size = 0
         self.config = config
@@ -41,6 +42,7 @@ class Loader(BasicDataset):
                     train_user.extend([uid] * len(items))
                     train_item.extend(items)
                     self.number_of_train_interactions.append(len(items))
+                    self.train_items_interacted.append(items)
 
                     self.m_item = max(self.m_item, max(items))
                     self.n_user = max(self.n_user, uid)
