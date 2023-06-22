@@ -161,12 +161,15 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         # Perform forward pass of the model to obtain the item embeddings
         _, item_embeddings = model()
 
-        # if multicore:
-        #     pre_results = pool.map(test_one_batch, X, item_embeddings)
-        # else:
-        pre_results = []
-        for batch_n, x in enumerate(X):
-            pre_results.append(test_one_batch(x, item_embeddings, conversion_interaction_to_bin, batch_n, train_items_interacted_batch, num_bins=num_bins))
+        if multicore:
+            pre_results = pool.starmap(test_one_batch,
+                                       [(x, item_embeddings, conversion_interaction_to_bin, batch_n,
+                                        train_items_interacted_batch, num_bins) for batch_n, x in enumerate(X)])
+        else:
+            pre_results = []
+            for batch_n, x in enumerate(X):
+                pre_results.append(test_one_batch(x, item_embeddings, conversion_interaction_to_bin,
+                                                  batch_n, train_items_interacted_batch, num_bins=num_bins))
 
         for result in pre_results:
             results["recall"] += result["recall"]
@@ -181,7 +184,6 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         results["recall"] /= float(len(users))
         results["precision"] /= float(len(users))
         results["ndcg"] /= float(len(users))
-        results["diversity"] /= float(len(users))
         results["novelty"] /= float(len(users))
         results['exploration_vs_precision'] /= bin_counts
         results['exploration_vs_recall'] /= bin_counts
