@@ -35,6 +35,7 @@ def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, num_bins=1
     precision, recall, ndcg = [], [], []
     exploration_vs_precision = np.zeros((len(world.topks), num_bins))
     exploration_vs_recall = np.zeros((len(world.topks), num_bins))
+    exploration_vs_ndcg = np.zeros((len(world.topks), num_bins))
 
     for i_k, k in enumerate(world.topks):
         ret = utils.recall_precision_at_k(ground_truth, label, k)
@@ -46,10 +47,12 @@ def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, num_bins=1
             n_interactions = len(ground_truth[user])
             user_bin = conversion_interaction_to_bin[n_interactions]
             user_ret = utils.recall_precision_at_k(ground_truth[user], label[user,:], k)
+            user_ndcg = utils.ndcg_at_k_r(ground_truth[user], label[user], k)
             user_precision = user_ret['precision']
             user_recall = user_ret['recall']
             exploration_vs_precision[i_k, user_bin] += user_precision
             exploration_vs_recall[i_k, user_bin] += user_recall
+            exploration_vs_ndcg[i_k, user_bin] = user_ndcg
 
     return {
         "recall": np.array(recall),
@@ -58,7 +61,8 @@ def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, num_bins=1
         "diversity": utils.mean_intra_list_distance(recommendation_lists=sorted_items,
                                                     item_embeddings=item_embeddings),
         'exploration_vs_precision': exploration_vs_precision,
-        'exploration_vs_recall': exploration_vs_recall
+        'exploration_vs_recall': exploration_vs_recall,
+        'exploration_vs_ndcg': exploration_vs_ndcg
     }
 
 
@@ -100,7 +104,8 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         "ndcg": np.zeros(len(world.topks)),
         "diversity": 0.,
         'exploration_vs_precision': np.zeros((len(world.topks), num_bins)),
-        "exploration_vs_recall": np.zeros((len(world.topks), num_bins))
+        "exploration_vs_recall": np.zeros((len(world.topks), num_bins)),
+        'exploration_vs_ndcg': np.zeros((len(world.topks), num_bins))
     }
 
     with torch.no_grad():
@@ -159,6 +164,7 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
             results['diversity'] += result["diversity"]
             results['exploration_vs_precision'] += result['exploration_vs_precision']
             results['exploration_vs_recall'] += result['exploration_vs_recall']
+            results['exploration_vs_ndcg'] += result['exploration_vs_ndcg']
 
         results["recall"] /= float(len(users))
         results["precision"] /= float(len(users))
@@ -166,6 +172,7 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         results["diversity"] /= float(len(users))
         results['exploration_vs_precision'] /= bin_counts
         results['exploration_vs_recall'] /= bin_counts
+        results['exploration_vs_ndcg'] /= bin_counts
 
         if multicore:
             pool.close()
