@@ -31,6 +31,7 @@ class Loader(BasicDataset):
         with open(train_file) as f:
             for line in f.readlines():
                 if len(line) > 0:
+                    line = line.replace('"', '')
                     line = line.strip("\n").split(" ")
 
                     items = [int(i) for i in line[1:]]
@@ -53,6 +54,7 @@ class Loader(BasicDataset):
         with open(test_file) as f:
             for line in f.readlines():
                 if len(line) > 0:
+                    line = line.replace('"', '')
                     line = line.strip("\n").split(" ")
 
                     try:
