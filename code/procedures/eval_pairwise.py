@@ -120,7 +120,7 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         _, item_embeddings = model()
 
         if multicore:
-            pre_results = pool.map(test_one_batch, X, item_embeddings)
+            pre_results = pool.starmap(test_one_batch, [(x, item_embeddings) for x in X])
         else:
             pre_results = []
             for i, x in enumerate(X):
