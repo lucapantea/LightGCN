@@ -109,6 +109,9 @@ def main():
                         results[f'Precision@{k}'] = test_metrics['precision'][i_k]
                         results[f'Recall@{k}'] = test_metrics['recall'][i_k]
                         results[f'NDCG@{k}'] = test_metrics['ndcg'][i_k]
+                        results[f'Exploration_vs_precision@{k}'] = test_metrics['exploration_vs_precision'][i_k, :]
+                        results[f'Exploration_vs_recalln@{k}'] = test_metrics['exploration_vs_recall'][i_k, :]
+                        results[f'Exploration_vs_ndcg@{k}'] = test_metrics['exploration_vs_ndcg'][i_k, :]
                     results['Diversity'] = test_metrics['diversity']
 
                     wandb.log({**results, 'Epoch': epoch})
