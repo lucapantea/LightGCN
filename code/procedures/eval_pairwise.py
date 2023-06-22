@@ -18,7 +18,7 @@ from models import BasicModel
 from tqdm import tqdm
 
 
-def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, num_bins=10):
+def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, batch_n, train_items_interacted_batch, num_bins=10):
     """
     Calculate precision, recall, and NDCG for a batch of user-item pairs.
 
@@ -60,11 +60,11 @@ def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, num_bins=1
         "ndcg": np.array(ndcg),
         "diversity": utils.mean_intra_list_distance(recommendation_lists=sorted_items,
                                                     item_embeddings=item_embeddings),
+        'novelty': utils.novelty(ground_truth[batch_n*100:(batch_n+1)*100], train_items_interacted_batch[batch_n], 20),
         'exploration_vs_precision': exploration_vs_precision,
         'exploration_vs_recall': exploration_vs_recall,
         'exploration_vs_ndcg': exploration_vs_ndcg
     }
-
 
 def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
     """
@@ -98,15 +98,26 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
     conversion_interaction_to_bin = dict(zip(number_of_train_interactions, bin_indices))
     bin_counts = np.bincount(bin_indices)
 
+    # Data for diversity
+    train_items_interacted = np.array(dataset.train_items_interacted)
+    # Define the number of rows for each mini matrix
+    rows_per_mini_matrix = world.config['test_batch']
+    # Split the matrix into mini matrices
+    batch_matrices = np.array_split(train_items_interacted, train_items_interacted.shape[0] // rows_per_mini_matrix)
+    # Create a dictionary to store the mini matrices
+    train_items_interacted_batch = {i: batch_matrices[i] for i in range(len(batch_matrices))}
+
+
     results = {
-        "precision": np.zeros(len(world.topks)),
-        "recall": np.zeros(len(world.topks)),
-        "ndcg": np.zeros(len(world.topks)),
-        "diversity": 0.,
-        'exploration_vs_precision': np.zeros((len(world.topks), num_bins)),
-        "exploration_vs_recall": np.zeros((len(world.topks), num_bins)),
-        'exploration_vs_ndcg': np.zeros((len(world.topks), num_bins))
-    }
+            "precision": np.zeros(len(world.topks)),
+            "recall": np.zeros(len(world.topks)),
+            "ndcg": np.zeros(len(world.topks)),
+            "diversity": 0.,
+            'novelty': 0.,
+            'exploration_vs_precision': np.zeros((len(world.topks), num_bins)),
+            "exploration_vs_recall": np.zeros((len(world.topks), num_bins)),
+            'exploration_vs_ndcg': np.zeros((len(world.topks), num_bins))
+        }
 
     with torch.no_grad():
         users = list(test_dict.keys())
@@ -154,14 +165,15 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         #     pre_results = pool.map(test_one_batch, X, item_embeddings)
         # else:
         pre_results = []
-        for i, x in enumerate(X):
-            pre_results.append(test_one_batch(x, item_embeddings, conversion_interaction_to_bin, num_bins=num_bins))
+        for batch_n, x in enumerate(X):
+            pre_results.append(test_one_batch(x, item_embeddings, conversion_interaction_to_bin, batch_n, train_items_interacted_batch, num_bins=num_bins))
 
         for result in pre_results:
             results["recall"] += result["recall"]
             results["precision"] += result["precision"]
             results["ndcg"] += result["ndcg"]
             results['diversity'] += result["diversity"]
+            results['novelty'] += result["novelty"]
             results['exploration_vs_precision'] += result['exploration_vs_precision']
             results['exploration_vs_recall'] += result['exploration_vs_recall']
             results['exploration_vs_ndcg'] += result['exploration_vs_ndcg']
@@ -170,6 +182,7 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         results["precision"] /= float(len(users))
         results["ndcg"] /= float(len(users))
         results["diversity"] /= float(len(users))
+        results["novelty"] /= float(len(users))
         results['exploration_vs_precision'] /= bin_counts
         results['exploration_vs_recall'] /= bin_counts
         results['exploration_vs_ndcg'] /= bin_counts
