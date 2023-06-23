@@ -82,6 +82,7 @@ LOAD = args.load
 PATH = args.path
 topks = eval(args.topks)
 comment = args.comment
+num_bins = 20
 
 # let pandas shut up
 simplefilter(action="ignore", category=FutureWarning)

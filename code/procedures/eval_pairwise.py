@@ -18,7 +18,7 @@ from models import BasicModel
 from tqdm import tqdm
 
 
-def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, batch_n, train_items_interacted_batch, num_bins=10):
+def test_one_batch(X, item_embeddings, batch_user_bins, batch_user_interaction_history, num_bins=10):
     """
     Calculate precision, recall, and NDCG for a batch of user-item pairs.
 
@@ -28,6 +28,7 @@ def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, batch_n, t
     Returns:
         dict: Dictionary containing recall, precision, and NDCG values for different top-k recommendations.
     """
+
     sorted_items = X[0].numpy()
     ground_truth = X[1]
 
@@ -36,20 +37,25 @@ def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, batch_n, t
     exploration_vs_precision = np.zeros((len(world.topks), num_bins))
     exploration_vs_recall = np.zeros((len(world.topks), num_bins))
     exploration_vs_ndcg = np.zeros((len(world.topks), num_bins))
-
+    
     for i_k, k in enumerate(world.topks):
         ret = utils.recall_precision_at_k(ground_truth, label, k)
         precision.append(ret["precision"])
         recall.append(ret["recall"])
         ndcg.append(utils.ndcg_at_k_r(ground_truth, label, k))
 
-        for user in range(len(sorted_items)):
-            n_interactions = len(ground_truth[user])
-            user_bin = conversion_interaction_to_bin[n_interactions]
-            user_ret = utils.recall_precision_at_k(ground_truth[user], label[user,:], k)
-            user_ndcg = utils.ndcg_at_k_r(ground_truth[user], label[user], k)
+        for user in range(len(sorted_items)):        
+            user_bin = batch_user_bins[user]
+
+            user_ground_truth = np.expand_dims(ground_truth[user], axis=0)
+            user_label = np.expand_dims(label[user, :], axis=0)
+
+            user_ret = utils.recall_precision_at_k(user_ground_truth, user_label, k)
+            user_ndcg = utils.ndcg_at_k_r(user_ground_truth, user_label, k)
             user_precision = user_ret['precision']
             user_recall = user_ret['recall']
+
+            # Binning by number of interactions
             exploration_vs_precision[i_k, user_bin] += user_precision
             exploration_vs_recall[i_k, user_bin] += user_recall
             exploration_vs_ndcg[i_k, user_bin] = user_ndcg
@@ -60,7 +66,7 @@ def test_one_batch(X, item_embeddings, conversion_interaction_to_bin, batch_n, t
         "ndcg": np.array(ndcg),
         "diversity": utils.mean_intra_list_distance(recommendation_lists=sorted_items,
                                                     item_embeddings=item_embeddings),
-        'novelty': utils.novelty(ground_truth[batch_n*100:(batch_n+1)*100], train_items_interacted_batch[batch_n], 20),
+        'novelty': utils.novelty(ground_truth, batch_user_interaction_history, max(world.topks)),
         'exploration_vs_precision': exploration_vs_precision,
         'exploration_vs_recall': exploration_vs_recall,
         'exploration_vs_ndcg': exploration_vs_ndcg
@@ -85,28 +91,11 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
     max_k = max(world.topks)
 
     if multicore:
+        multiprocessing.set_start_method('spawn', force=True)
         pool = multiprocessing.Pool(multiprocessing.cpu_count() // 2)
 
-    # Data for exploration_vs_recall metric
-    number_of_train_interactions = np.array(dataset.number_of_train_interactions)
     # Define the bin thresholds
-    num_bins = 10
-    bin_thresholds = np.linspace(number_of_train_interactions.min(), number_of_train_interactions.max(), num_bins)
-
-    # Assign users to bins using np.digitize()
-    bin_indices = np.digitize(number_of_train_interactions, bin_thresholds)
-    conversion_interaction_to_bin = dict(zip(number_of_train_interactions, bin_indices))
-    bin_counts = np.bincount(bin_indices)
-
-    # Data for diversity
-    train_items_interacted = np.array(dataset.train_items_interacted)
-    # Define the number of rows for each mini matrix
-    rows_per_mini_matrix = world.config['test_batch']
-    # Split the matrix into mini matrices
-    batch_matrices = np.array_split(train_items_interacted, train_items_interacted.shape[0] // rows_per_mini_matrix)
-    # Create a dictionary to store the mini matrices
-    train_items_interacted_batch = {i: batch_matrices[i] for i in range(len(batch_matrices))}
-
+    num_bins = world.num_bins
 
     results = {
             "precision": np.zeros(len(world.topks)),
@@ -161,15 +150,21 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         # Perform forward pass of the model to obtain the item embeddings
         _, item_embeddings = model()
 
+        # The user bins are computedby binnding users based on the number of interactions they have in the training set
+        user_bins_by_num_interactions = [[dataset.user_bins_by_num_interactions[user_id] for user_id in batch_users] for batch_users in users_list]
+
+        user_interaction_history = [[dataset.user_interactions_dict_train[user_id] for user_id in batch_users] for batch_users in users_list]
+        
         if multicore:
             pre_results = pool.starmap(test_one_batch,
-                                       [(x, item_embeddings, conversion_interaction_to_bin, batch_n,
-                                        train_items_interacted_batch, num_bins) for batch_n, x in enumerate(X)])
+                                       [(x, item_embeddings, user_bins_by_num_interactions[batch], 
+                                         user_interaction_history[batch], num_bins) 
+                                         for batch, x in enumerate(X)])
         else:
             pre_results = []
-            for batch_n, x in enumerate(X):
-                pre_results.append(test_one_batch(x, item_embeddings, conversion_interaction_to_bin,
-                                                  batch_n, train_items_interacted_batch, num_bins=num_bins))
+            for batch, x in enumerate(X):
+                pre_results.append(test_one_batch(x, item_embeddings, user_bins_by_num_interactions[batch],
+                                                  user_interaction_history[batch], num_bins))
 
         for result in pre_results:
             results["recall"] += result["recall"]
@@ -181,10 +176,17 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
             results['exploration_vs_recall'] += result['exploration_vs_recall']
             results['exploration_vs_ndcg'] += result['exploration_vs_ndcg']
 
+
+        # Compute counts for each bin
+        bin_counts = np.bincount([dataset.user_bins_by_num_interactions[user_id] for user_id in users]) + 1e-10
+
+        print('bin_counts', bin_counts)
+
         results["recall"] /= float(len(users))
         results["precision"] /= float(len(users))
         results["ndcg"] /= float(len(users))
-        results["novelty"] /= float(len(users))
+        results["novelty"] /= float(len(pre_results))
+        results["diversity"] /= float(len(users))
         results['exploration_vs_precision'] /= bin_counts
         results['exploration_vs_recall'] /= bin_counts
         results['exploration_vs_ndcg'] /= bin_counts
