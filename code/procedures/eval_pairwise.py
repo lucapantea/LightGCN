@@ -18,7 +18,7 @@ from models import BasicModel
 from tqdm import tqdm
 
 
-def test_one_batch(X, item_embeddings, batch_user_bins, batch_user_interaction_history, num_bins=10):
+def test_one_batch(X, item_embeddings, batch_user_bins, batch_user_interaction_history, num_bins=20):
     """
     Calculate precision, recall, and NDCG for a batch of user-item pairs.
 

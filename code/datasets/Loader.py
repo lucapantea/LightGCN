@@ -25,8 +25,6 @@ class Loader(BasicDataset):
         self.path = path
         train_unique_users, train_item, train_user = [], [], []
         test_unique_users, test_item, test_user = [], [], []
-        # self.number_of_train_interactions = []
-        # self.train_items_interacted = []
         self.train_data_size = 0
         self.test_data_size = 0
         self.config = config
