@@ -10,7 +10,7 @@ import json
 import argparse
 
 all_datasets = ["lastfm", "gowalla", "yelp2018", "amazon-book"]
-all_models = ["mf", "lgn", "sdp-a-lgn", "w-sdp-a-lgn"]
+all_models = ["mf", "lgn", "base-a-lgn", "finer-a-lgn", "sdp-a-lgn", "w-sdp-a-lgn"]
 
 
 def parse_args():
