@@ -18,7 +18,7 @@ from models import BasicModel
 from tqdm import tqdm
 
 
-def test_one_batch(X):
+def test_one_batch(X, item_embeddings, batch_user_bins, batch_user_interaction_history, num_bins=20):
     """
     Calculate precision, recall, and NDCG for a batch of user-item pairs.
 
@@ -28,24 +28,49 @@ def test_one_batch(X):
     Returns:
         dict: Dictionary containing recall, precision, and NDCG values for different top-k recommendations.
     """
+
     sorted_items = X[0].numpy()
     ground_truth = X[1]
 
     label = utils.get_label(ground_truth, sorted_items)
     precision, recall, ndcg = [], [], []
-
-    for k in world.topks:
+    exploration_vs_precision = np.zeros((len(world.topks), num_bins))
+    exploration_vs_recall = np.zeros((len(world.topks), num_bins))
+    exploration_vs_ndcg = np.zeros((len(world.topks), num_bins))
+    
+    for i_k, k in enumerate(world.topks):
         ret = utils.recall_precision_at_k(ground_truth, label, k)
         precision.append(ret["precision"])
         recall.append(ret["recall"])
         ndcg.append(utils.ndcg_at_k_r(ground_truth, label, k))
 
+        for user in range(len(sorted_items)):        
+            user_bin = batch_user_bins[user]
+
+            user_ground_truth = np.expand_dims(ground_truth[user], axis=0)
+            user_label = np.expand_dims(label[user, :], axis=0)
+
+            user_ret = utils.recall_precision_at_k(user_ground_truth, user_label, k)
+            user_ndcg = utils.ndcg_at_k_r(user_ground_truth, user_label, k)
+            user_precision = user_ret['precision']
+            user_recall = user_ret['recall']
+
+            # Binning by number of interactions
+            exploration_vs_precision[i_k, user_bin] += user_precision
+            exploration_vs_recall[i_k, user_bin] += user_recall
+            exploration_vs_ndcg[i_k, user_bin] = user_ndcg
+
     return {
         "recall": np.array(recall),
         "precision": np.array(precision),
-        "ndcg": np.array(ndcg)
+        "ndcg": np.array(ndcg),
+        "diversity": utils.mean_intra_list_distance(recommendation_lists=sorted_items,
+                                                    item_embeddings=item_embeddings),
+        'novelty': utils.novelty(ground_truth, batch_user_interaction_history, max(world.topks)),
+        'exploration_vs_precision': exploration_vs_precision,
+        'exploration_vs_recall': exploration_vs_recall,
+        'exploration_vs_ndcg': exploration_vs_ndcg
     }
-
 
 def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
     """
@@ -66,13 +91,22 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
     max_k = max(world.topks)
 
     if multicore:
+        multiprocessing.set_start_method('spawn', force=True)
         pool = multiprocessing.Pool(multiprocessing.cpu_count() // 2)
 
+    # Define the bin thresholds
+    num_bins = world.num_bins
+
     results = {
-        "precision": np.zeros(len(world.topks)),
-        "recall": np.zeros(len(world.topks)),
-        "ndcg": np.zeros(len(world.topks))
-    }
+            "precision": np.zeros(len(world.topks)),
+            "recall": np.zeros(len(world.topks)),
+            "ndcg": np.zeros(len(world.topks)),
+            "diversity": 0.,
+            'novelty': 0.,
+            'exploration_vs_precision': np.zeros((len(world.topks), num_bins)),
+            "exploration_vs_recall": np.zeros((len(world.topks), num_bins)),
+            'exploration_vs_ndcg': np.zeros((len(world.topks), num_bins))
+        }
 
     with torch.no_grad():
         users = list(test_dict.keys())
@@ -113,21 +147,47 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
 
         X = zip(rating_list, ground_truth_list)
 
+        # Perform forward pass of the model to obtain the item embeddings
+        _, item_embeddings = model()
+
+        # The user bins are computedby binnding users based on the number of interactions they have in the training set
+        user_bins_by_num_interactions = [[dataset.user_bins_by_num_interactions[user_id] for user_id in batch_users] for batch_users in users_list]
+
+        user_interaction_history = [[dataset.user_interactions_dict_train[user_id] for user_id in batch_users] for batch_users in users_list]
+        
         if multicore:
-            pre_results = pool.map(test_one_batch, X)
+            pre_results = pool.starmap(test_one_batch,
+                                       [(x, item_embeddings, user_bins_by_num_interactions[batch], 
+                                         user_interaction_history[batch], num_bins) 
+                                         for batch, x in enumerate(X)])
         else:
             pre_results = []
-            for x in X:
-                pre_results.append(test_one_batch(x))
+            for batch, x in enumerate(X):
+                pre_results.append(test_one_batch(x, item_embeddings, user_bins_by_num_interactions[batch],
+                                                  user_interaction_history[batch], num_bins))
 
         for result in pre_results:
             results["recall"] += result["recall"]
             results["precision"] += result["precision"]
             results["ndcg"] += result["ndcg"]
+            results['diversity'] += result["diversity"]
+            results['novelty'] += result["novelty"]
+            results['exploration_vs_precision'] += result['exploration_vs_precision']
+            results['exploration_vs_recall'] += result['exploration_vs_recall']
+            results['exploration_vs_ndcg'] += result['exploration_vs_ndcg']
+
+
+        # Compute counts for each bin
+        bin_counts = np.bincount([dataset.user_bins_by_num_interactions[user_id] for user_id in users]) + 1e-10
 
         results["recall"] /= float(len(users))
         results["precision"] /= float(len(users))
         results["ndcg"] /= float(len(users))
+        results["novelty"] /= float(len(pre_results))
+        results["diversity"] /= float(len(users))
+        results['exploration_vs_precision'] /= bin_counts
+        results['exploration_vs_recall'] /= bin_counts
+        results['exploration_vs_ndcg'] /= bin_counts
 
         if multicore:
             pool.close()

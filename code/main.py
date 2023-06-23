@@ -4,6 +4,7 @@ import torch
 import wandb
 import os
 import procedures
+import numpy as np
 
 from tqdm import tqdm
 from pprint import pprint
@@ -84,7 +85,8 @@ def main():
 
     # Initialize wandb
     wandb.init(project=world.WANDB_PROJECT, entity=world.WANDB_ENTITY, 
-               config=world.config, reinit=True, name=wandb_run_name)
+               config=world.config, reinit=True, name=wandb_run_name,
+               tags=['latest'])
     wandb.watch(model)
 
     # Saving the best model instance based on set variable
@@ -100,18 +102,36 @@ def main():
                 wandb.log({"BPR Loss": avg_loss, "Epoch": epoch})
 
                 # Evaluate the model on the validation set
-                if epoch % 10 == 0:
+                if epoch % 20 == 0:
                     test_metrics = procedures.eval_pairwise(
                         dataset, model, world.config['multicore'])
+
+                    # Result dictionary to log to wandb
                     results = {}
+
+                    # Exploration table: Metrics vs. Bin
+                    exploration_table_data = []
+                    columns = ['Metric'] + [f'Bin {bin_num+1}' for bin_num in range(world.num_bins)]  
+
+                    # For each k, log the precision, recall, and ndcg, and construct the exploration table    
                     for i_k, k in enumerate(world.topks):
                         results[f'Precision@{k}'] = test_metrics['precision'][i_k]
                         results[f'Recall@{k}'] = test_metrics['recall'][i_k]
                         results[f'NDCG@{k}'] = test_metrics['ndcg'][i_k]
+                        exploration_table_data.append([f'Exploration_vs_precision@{k}'] + test_metrics['exploration_vs_precision'][i_k, :].tolist())
+                        exploration_table_data.append([f'Exploration_vs_recall@{k}'] + test_metrics['exploration_vs_recall'][i_k, :].tolist())
+                        exploration_table_data.append([f'Exploration_vs_ndcg@{k}'] + test_metrics['exploration_vs_ndcg'][i_k, :].tolist())
+                    
+                    # Log the exploration table, diversity, and novelty
+                    results['Exploration Table'] = wandb.Table(data=exploration_table_data, columns=columns)
+                    results['Diversity'] = test_metrics['diversity']
+                    results['Novelty'] = test_metrics['novelty']
 
+                    # Log the results to wandb
                     wandb.log({**results, 'Epoch': epoch})
 
-                    if test_metrics[save_model_by] > best_test_metric:
+                    # Save the model if it is the best so far
+                    if test_metrics[save_model_by][np.argmax(test_metrics[save_model_by])] > best_test_metric:
                         best_test_metric = test_metrics[save_model_by]
                         wandb.run.summary[f"best_{save_model_by}"] = best_test_metric
                         ckpt = {
