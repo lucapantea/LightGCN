@@ -1,4 +1,4 @@
-from code.datasets import BasicDataset
+from datasets import BasicDataset
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
