@@ -2,7 +2,7 @@
 
 #SBATCH --partition=gpu_titanrtx_shared_course
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=LightGCN-Gowalla
+#SBATCH --job-name=LightGCN-Gowalla-single
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
 #SBATCH --time=48:00:00
@@ -31,6 +31,7 @@ for nl in "${num_layers[@]}"; do
         --seed 2020 \
         --recdim 64 \
         --batch_size 1024 \
+        --single \
         --layer $nl
 done
 
