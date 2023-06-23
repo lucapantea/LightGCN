@@ -2,6 +2,7 @@ from .BasicDataset import BasicDataset
 import world
 import numpy as np
 from scipy.sparse import csr_matrix
+from collections import defaultdict
 import torch
 from time import time
 import scipy.sparse as sp
@@ -24,11 +25,14 @@ class Loader(BasicDataset):
         self.path = path
         train_unique_users, train_item, train_user = [], [], []
         test_unique_users, test_item, test_user = [], [], []
-        self.number_of_train_interactions = []
-        self.train_items_interacted = []
+        # self.number_of_train_interactions = []
+        # self.train_items_interacted = []
         self.train_data_size = 0
         self.test_data_size = 0
         self.config = config
+
+        # Maintains a mapping based on interactions {user_id -> [item_ids]}
+        self.user_interactions_dict_train = defaultdict(list)
 
         with open(train_file) as f:
             for line in f.readlines():
@@ -41,16 +45,15 @@ class Loader(BasicDataset):
                     train_unique_users.append(uid)
                     train_user.extend([uid] * len(items))
                     train_item.extend(items)
-                    self.number_of_train_interactions.append(len(items))
-                    self.train_items_interacted.append(items)
+
+                    # Maintain a mapping of user_id -> [item_ids]
+                    self.user_interactions_dict_train[uid].extend(items)
 
                     self.m_item = max(self.m_item, max(items))
                     self.n_user = max(self.n_user, uid)
-
                     self.train_data_size += len(items)
 
         self.train_unique_users = np.array(train_unique_users)
-
         self.train_user = np.array(train_user)
         self.train_item = np.array(train_item)
 
@@ -69,7 +72,7 @@ class Loader(BasicDataset):
                     test_unique_users.append(uid)
                     test_user.extend([uid] * len(items))
                     test_item.extend(items)
-
+                    
                     self.m_item = max(self.m_item, max(items))
                     self.n_user = max(self.n_user, uid)
 
@@ -108,6 +111,9 @@ class Loader(BasicDataset):
 
         self._allPos = self.get_user_pos_items(list(range(self.n_user)))
         self.__testDict = self.__build_test()
+
+        # Assing users to bins based on the number of interactions they have
+        self.user_bins_by_num_interactions = self.distribute_users_into_bins_by_num_interactions(num_bins=world.num_bins)
 
         print(f"{world.dataset} is ready to go")
 
@@ -254,3 +260,18 @@ class Loader(BasicDataset):
             posItems.append(self.user_item_net[user].nonzero()[1])
 
         return posItems
+    
+    def distribute_users_into_bins_by_num_interactions(self, num_bins):
+        log_values = [np.log(len(self.user_interactions_dict_train[user])) for user in self.user_interactions_dict_train.keys()]
+
+        # Create bins
+        min_num_interactions = min(log_values)
+        max_num_interactions = max(log_values)
+        bin_thresholds = np.linspace(min_num_interactions, max_num_interactions, num_bins)
+
+        # Assign users to a bin based on the number of items they interacted with
+        bin_indices = np.digitize(log_values, bin_thresholds, right=True)
+
+        # Create a dictionary that maps users to bins
+        user_bin_dict = dict(zip(self.user_interactions_dict_train.keys(), bin_indices))
+        return user_bin_dict

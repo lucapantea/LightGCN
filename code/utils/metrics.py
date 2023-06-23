@@ -10,17 +10,15 @@ import torch
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-def novelty(ground_truth, train_items_interacted_batch, topk):
-    train_items_interacted_batch = train_items_interacted_batch.tolist()
 
-    novelty = 0
+def novelty(ground_truth, train_items_interacted_batch, topk):
+    novelty = 0.
     # We want to calculate the proportion of novel items recommended to a user
     for user_train_beh, user_recom in zip(ground_truth, train_items_interacted_batch):
         set_user_train_beh = set(user_train_beh)
         set_user_recom = set(user_recom)
-        repeated_elements = len(set_user_train_beh.intersection(set_user_recom))
-        novelty += (topk - repeated_elements) / topk
-
+        num_repeated_elements = len(set_user_train_beh.intersection(set_user_recom))
+        novelty += (topk - num_repeated_elements) / topk
     return novelty
 
 
@@ -42,7 +40,7 @@ def mean_intra_list_distance(recommendation_lists, item_embeddings):
         list_length = recommendation_lists.shape[1]
         ILDs = upper_triangular_part.sum(dim=[1, 2]) / (list_length * (list_length - 1) / 2)
 
-    return torch.mean(ILDs).item()
+    return torch.sum(ILDs).item()
 
 
 
