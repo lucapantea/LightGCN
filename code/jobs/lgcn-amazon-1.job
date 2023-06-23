@@ -2,11 +2,11 @@
 
 #SBATCH --partition=gpu_titanrtx_shared_course
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=LightGCN-Amazon
+#SBATCH --job-name=LightGCN-Amazon-1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
-#SBATCH --time=24:00:00
-#SBATCH --mem=32000M
+#SBATCH --time=48:00:00
+#SBATCH --mem=64000M
 #SBATCH --output=../out/slurm_output_%x.out
 
 module purge
@@ -15,14 +15,16 @@ module load Anaconda3/2021.05
 
 # activate the environment
 source activate lightgcn-gpu
+wandb online
 
 cd $HOME/LightGCN/code
 
-num_layers=(1 2 3 4)
+num_layers=(1)
 
 for nl in "${num_layers[@]}"; do
     srun python -u main.py \
         --model "lgn" \
+        --topks "[1, 2, 3, 5, 10, 20]" \
         --dataset "amazon-book" \
         --lr 0.001 \
         --decay 0.0001 \
