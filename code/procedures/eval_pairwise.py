@@ -180,8 +180,6 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         # Compute counts for each bin
         bin_counts = np.bincount([dataset.user_bins_by_num_interactions[user_id] for user_id in users]) + 1e-10
 
-        print('bin_counts', bin_counts)
-
         results["recall"] /= float(len(users))
         results["precision"] /= float(len(users))
         results["ndcg"] /= float(len(users))
