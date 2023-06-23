@@ -140,12 +140,12 @@ def main():
 
                     # Save the model if it is the best so far
                     if test_metrics[save_model_by][np.argmax(test_metrics[save_model_by])] > best_test_metric:
-                        best_test_metric = test_metrics[save_model_by]
+                        best_test_metric = test_metrics[save_model_by][np.argmax(test_metrics[save_model_by])]
                         wandb.run.summary[f"best_{save_model_by}"] = best_test_metric
                         ckpt = {
                             "state_dict": model.state_dict(),
                             "optimizer_state_dict": optimizer.state_dict(),
-                            f"best_{save_model_by}": best_test_metric,
+                            f"best_{save_model_by}@{max(world.topks)}": best_test_metric,
                             "best_epoch": epoch
                         }
                         torch.save(ckpt, weight_file)
