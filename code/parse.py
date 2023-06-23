@@ -37,7 +37,7 @@ def parse_args():
                         help=f"available datasets: {str(all_datasets)}")
     parser.add_argument("--path", type=str, default="./checkpoints",
                         help="path to save weights")
-    parser.add_argument("--topks", nargs="?", default="[20]",
+    parser.add_argument("--topks", nargs="?", default="[1, 2, 3, 5, 10, 20]",
                         help="@k test list")
     parser.add_argument("--comment", type=str, default="lgn")
     parser.add_argument("--load", type=int, default=0)
