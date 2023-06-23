@@ -17,6 +17,7 @@ module load Anaconda3/2021.05
 source activate lightgcn-gpu
 
 cd $HOME/LightGCN/code
+wandb online
 
 attention_dims=(8)
 num_layers=(1 2 3 4)
