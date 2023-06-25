@@ -9,6 +9,7 @@ LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 Define models here
 """
 from torch import nn
+import torch
 
 
 class BasicModel(nn.Module):
@@ -17,3 +18,6 @@ class BasicModel(nn.Module):
 
     def get_user_rating(self, users):
         raise NotImplementedError
+
+    def parameters_norm(self):
+        return torch.tensor(0)

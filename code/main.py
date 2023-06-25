@@ -8,13 +8,17 @@ import numpy as np
 
 from tqdm import tqdm
 from pprint import pprint
-from models import LightGCN, PureMF
+from models import LightGCN, PureMF, BaseAttention, FinerAttention,ScaledDotProductAttentionLightGCN, WeightedScaledDotProductAttentionLightGCN
 from losses import BPRLoss
 
 
 MODELS = {
     "mf": PureMF,
-    "lgn": LightGCN
+    "lgn": LightGCN,
+    "base-a-lgn": BaseAttention,
+    "finer-a-lgn": FinerAttention,
+    "sdp-a-lgn": ScaledDotProductAttentionLightGCN,
+    "w-sdp-a-lgn": WeightedScaledDotProductAttentionLightGCN
 }
 
 
@@ -63,6 +67,10 @@ def main():
         decay=world.config["decay"],
         seed=world.config["seed"],
         # Extra weight filename parameters are now supported.
+
+        # Weighted scaled dot product
+        **{'attention_dim': world.config['attention_dim']} if ('attention_dim' in world.config
+                                                               and world.config['model'] == 'w-sdp-a-lgn') else {}
     )
     print(f"Loading and saving to {weight_file}")
 
