@@ -38,7 +38,8 @@ class BPRLoss(object):
                  neg_items_embeddings,
                  users_embeddings_layer0,
                  pos_items_embeddings_layer0,
-                 neg_items_embeddings_layer0):
+                 neg_items_embeddings_layer0,
+                 parameters_norm):
         """
         Compute the BPR loss given the embeddings.
 
@@ -55,7 +56,8 @@ class BPRLoss(object):
         """
         reg_loss = (1 / 2) * (users_embeddings_layer0.norm(2).pow(2) +
                               pos_items_embeddings_layer0.norm(2).pow(2) +
-                              neg_items_embeddings_layer0.norm(2).pow(2)
+                              neg_items_embeddings_layer0.norm(2).pow(2) +
+                              parameters_norm
                               ) / users_embeddings.shape[0]
 
         pos_scores = torch.mul(users_embeddings, pos_items_embeddings)
@@ -64,7 +66,8 @@ class BPRLoss(object):
         neg_scores = torch.mul(users_embeddings, neg_items_embeddings)
         neg_scores = torch.sum(neg_scores, dim=1)
 
-        loss = torch.mean(torch.nn.functional.softplus(neg_scores - pos_scores))
+        loss = torch.mean(torch.nn.functional.softplus(
+            neg_scores - pos_scores))
         reg_loss *= self.weight_decay
         loss += reg_loss
 
