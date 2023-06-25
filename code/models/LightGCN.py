@@ -29,7 +29,6 @@ class LightGCN(BasicModel):
             latent_dim (int): Dimensionality of the latent embeddings.
             n_layers (int): Number of layers in the LightGCN model.
             keep_prob (float): Keep probability for dropout.
-            a_split (bool): Whether to split adjacency matrix in case of multi-head attention.
             embedding_user (torch.nn.Embedding): Embedding layer for users.
             embedding_item (torch.nn.Embedding): Embedding layer for items.
             sigmoid (torch.nn.Sigmoid): Sigmoid activation function.

@@ -1,4 +1,3 @@
-from datasets import BasicDataset
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -194,9 +193,9 @@ class WeightedScaledDotProductAttentionLightGCN(ScaledDotProductAttentionLightGC
         super().__init__(config, dataset)
         self.latent_dim = self.config["latent_dim_rec"]
         self.attention_dim = self.config.get("attention_dim", 1)
-        self.query_projection = nn.Linear(self.latent_dim, self.attention_dim)
-        self.key_projection = nn.Linear(self.latent_dim, self.attention_dim)
-        self.value_projection = nn.Linear(self.latent_dim, self.attention_dim)
+        self.query_projection = nn.Linear(self.latent_dim, self.attention_dim, bias=False)
+        self.key_projection = nn.Linear(self.latent_dim, self.attention_dim, bias=False)
+        self.value_projection = nn.Linear(self.latent_dim, self.attention_dim, bias=False)
 
     def prepare_attention_inputs(self, embs):
         queries = self.query_projection(embs)
