@@ -66,7 +66,8 @@ def train_pairwise(dataset, model, loss_class, optimizer):
             neg_items_embeddings,
             users_embeddings_layer0,
             pos_items_embeddings_layer0,
-            neg_items_embeddings_layer0
+            neg_items_embeddings_layer0,
+            model.parameters_norm()
         )
 
         loss.backward()
