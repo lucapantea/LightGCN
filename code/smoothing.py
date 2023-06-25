@@ -1,5 +1,5 @@
 import torch
-from dataloader import Loader
+from datasets import Loader
 import os
 import world
 import numpy as np
