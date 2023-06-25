@@ -110,7 +110,7 @@ def main():
                 wandb.log({"BPR Loss": avg_loss, "Epoch": epoch})
 
                 # Evaluate the model on the validation set
-                if epoch % 20 == 0:
+                if epoch % 10 == 0:
                     test_metrics = procedures.eval_pairwise(
                         dataset, model, world.config['multicore'])
 
