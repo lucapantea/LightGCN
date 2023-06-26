@@ -2,7 +2,7 @@
 
 #SBATCH --partition=gpu_titanrtx_shared_course
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=LightGCN-Amazon-WSDPA-3
+#SBATCH --job-name=LightGCN-Amazon-WSDPA-2
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
 #SBATCH --time=48:00:00
@@ -20,7 +20,7 @@ cd $HOME/LightGCN/code
 wandb online
 
 attention_dims=(8)
-num_layers=(3)
+num_layers=(2)
 
 for ad in "${attention_dims[@]}"; do
     for nl in "${num_layers[@]}"; do
