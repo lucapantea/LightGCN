@@ -188,7 +188,6 @@ wandb
 runs
 checkpoints
 sources
-data
 embs
 
 .vscode
