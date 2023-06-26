@@ -150,7 +150,7 @@ def eval_pairwise(dataset: BasicDataset, model: BasicModel, multicore=0):
         # Perform forward pass of the model to obtain the item embeddings
         _, item_embeddings = model()
 
-        # The user bins are computedby binnding users based on the number of interactions they have in the training set
+        # The user bins are computedby binning users based on the number of interactions they have in the training set
         user_bins_by_num_interactions = [[dataset.user_bins_by_num_interactions[user_id] for user_id in batch_users] for batch_users in users_list]
 
         user_interaction_history = [[dataset.user_interactions_dict_train[user_id] for user_id in batch_users] for batch_users in users_list]

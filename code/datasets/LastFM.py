@@ -179,7 +179,7 @@ class LastFM(BasicDataset):
     def __len__(self):
         return len(self.train_unique_users)
 
-    def compute_personalized_vectors(self, adjacency_matrix, d, num_walks=10, walk_length=2):
+    def compute_personalized_vectors(self, adjacency_matrix, d, num_walks, walk_length):
         '''Computes personalised vectors for Personalised Page Rank'''
         adjacency_matrix= self.get_sparse_graph()
         personalized_vectors = np.zeros((self.n_user, d))
@@ -202,5 +202,4 @@ class LastFM(BasicDataset):
                     current_node = next_node
 
         personalized_vectors = personalized_vectors / np.linalg.norm(personalized_vectors, axis=1, keepdims=True)
-        print('t')
         return personalized_vectors

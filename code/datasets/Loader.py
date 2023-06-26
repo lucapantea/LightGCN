@@ -274,7 +274,7 @@ class Loader(BasicDataset):
         return user_bin_dict
 
 
-    def compute_personalized_vectors(self, adjacency_matrix, d, num_walks=10, walk_length=2):
+    def compute_personalized_vectors(self, adjacency_matrix, d, num_walks, walk_length):
         '''Computes personalised vectors for Personalised Page Rank'''
         adjacency_matrix= self.get_sparse_graph()
         personalized_vectors = np.zeros((self.n_user, d))

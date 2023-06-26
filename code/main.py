@@ -33,7 +33,6 @@ def main():
     dataset = utils.get_dataset(world.DATA_PATH, world.dataset)
     model = MODELS[world.model_name](world.config, dataset)
     model = model.to(world.device)
-
     # Initialize BPR loss
     criterion = BPRLoss(weight_decay=world.config["decay"])
     optimizer = torch.optim.Adam(model.parameters(), lr=world.config["lr"])
