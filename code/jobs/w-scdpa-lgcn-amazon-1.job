@@ -2,11 +2,11 @@
 
 #SBATCH --partition=gpu_titanrtx_shared_course
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=LightGCN-Amazon-WSDPA-12
+#SBATCH --job-name=LightGCN-Amazon-WSDPA-1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
 #SBATCH --time=48:00:00
-#SBATCH --mem=32000M
+#SBATCH --mem=64000M
 #SBATCH --output=../out/slurm_output_%x.out
 
 module purge
@@ -20,7 +20,7 @@ cd $HOME/LightGCN/code
 wandb online
 
 attention_dims=(8)
-num_layers=(1 2)
+num_layers=(1)
 
 for ad in "${attention_dims[@]}"; do
     for nl in "${num_layers[@]}"; do
