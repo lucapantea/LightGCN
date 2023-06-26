@@ -59,7 +59,8 @@ config["l1"] = args.l1
 config["side_norm"] = args.side_norm
 config["embs_path"] = EMBS_PATH
 config["save_embs"] = args.save_embs
-config["dataset"] = args.dataset
+# config["dataset"] = args.dataset
+config["dataset"] = 'lastfm'
 config["model"] = args.model
 config["save_model_by"] = args.save_model_by
 

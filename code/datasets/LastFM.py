@@ -178,3 +178,29 @@ class LastFM(BasicDataset):
 
     def __len__(self):
         return len(self.train_unique_users)
+
+    def compute_personalized_vectors(self, adjacency_matrix, d, num_walks=10, walk_length=2):
+        '''Computes personalised vectors for Personalised Page Rank'''
+        adjacency_matrix= self.get_sparse_graph()
+        personalized_vectors = np.zeros((self.n_user, d))
+
+        for node in range(self.n_user):
+            current_node = node
+            for walk in range(num_walks):
+                for length in range(walk_length):
+                    # neighbors = np.nonzero(adjacency_matrix[current_node, :])[0]
+                    # neighbors = adjacency_matrix[current_node].nonzero()[1]
+                    # neighbors = torch.nonzero(adjacency_matrix[current_node, :]).squeeze().numpy()
+                    # neighbors = np.nonzero(adjacency_matrix[current_node, :].toarray())[1]
+                    dense_adjacency_matrix = adjacency_matrix.to_dense()
+                    neighbors = torch.nonzero(dense_adjacency_matrix[current_node, :]).flatten()
+
+                    if len(neighbors) == 0:
+                        break
+                    next_node = np.random.choice(neighbors)
+                    personalized_vectors[node, :] += np.random.normal(size=d)
+                    current_node = next_node
+
+        personalized_vectors = personalized_vectors / np.linalg.norm(personalized_vectors, axis=1, keepdims=True)
+        print('t')
+        return personalized_vectors

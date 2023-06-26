@@ -27,13 +27,13 @@ except Exception:
 def uniform_sample_original(dataset: BasicDataset, neg_ratio=1):
     all_pos = dataset.all_pos
 
-    if sample_ext:
-        samples = sampling.sample_negative(
-            dataset.n_users, dataset.m_items,
-            dataset.train_data_size, all_pos, neg_ratio
-        )
-    else:
-        samples = uniform_sample_original_python(dataset)
+    # if sample_ext:
+    #     samples = sampling.sample_negative(
+    #         dataset.n_users, dataset.m_items,
+    #         dataset.train_data_size, all_pos, neg_ratio
+    #     )
+    # else:
+    samples = uniform_sample_original_python(dataset)
 
     return samples
 

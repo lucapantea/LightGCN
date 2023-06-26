@@ -87,12 +87,12 @@ class LightGCN(BasicModel):
                 torch.from_numpy(self.config['user_emb']))
             self.embedding_item.weight.data.copy_(
                 torch.from_numpy(self.config['item_emb']))
-            print('use pretarined data')
+            print('use pretrained data')
 
         self.sigmoid = nn.Sigmoid()
         self.graph = self.dataset.get_sparse_graph()
         self.embs = None
-
+        self.personalised_vecs = self.dataset.compute_personalized_vectors(self.graph, self.config['latent_dim_rec'], num_walks=10, walk_length=10)
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
     @staticmethod
@@ -125,10 +125,13 @@ class LightGCN(BasicModel):
 
     def forward(self):
         """Forward pass of the model."""
+        print('t')
         users_emb = self.embedding_user.weight
+        personalized_emb = self.personalized_vectors
         items_emb = self.embedding_item.weight
         all_emb = torch.cat([users_emb, items_emb])
         embs = [all_emb]
+        scaling_factor = 1 # Experiment w/ this value
 
         if self.config['dropout']:
             if self.training:
@@ -149,6 +152,14 @@ class LightGCN(BasicModel):
                 all_emb = side_emb
             else:
                 all_emb = torch.sparse.mm(g_droped, all_emb)
+
+            print('t')
+            # Incorporate personalized vectors here
+            personalized_emb_scaled = personalized_emb * scaling_factor  # Apply scaling factor
+            all_emb[:self.num_users, :] += personalized_emb_scaled
+
+            print('t')
+
             embs.append(all_emb)
         embs = torch.stack(embs, dim=1)
 

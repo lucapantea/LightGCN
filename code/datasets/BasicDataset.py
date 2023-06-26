@@ -36,3 +36,7 @@ class BasicDataset(Dataset):
             |R^T, I|
         """
         raise NotImplementedError
+
+    def compute_personalized_vectors(self, adjacency_matrix, d, num_walks=10, walk_length=10):
+        '''Computes personalised vectors for Personalised Page Rank'''
+        raise NotImplementedError

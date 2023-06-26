@@ -8,7 +8,6 @@ from time import time
 import scipy.sparse as sp
 from os.path import join
 
-
 class Loader(BasicDataset):
     def __init__(self, config, path):
         super().__init__()
@@ -273,3 +272,29 @@ class Loader(BasicDataset):
         # Create a dictionary that maps users to bins
         user_bin_dict = dict(zip(self.user_interactions_dict_train.keys(), bin_indices))
         return user_bin_dict
+
+
+    def compute_personalized_vectors(self, adjacency_matrix, d, num_walks=10, walk_length=2):
+        '''Computes personalised vectors for Personalised Page Rank'''
+        adjacency_matrix= self.get_sparse_graph()
+        personalized_vectors = np.zeros((self.n_user, d))
+
+        for node in range(self.n_user):
+            current_node = node
+            for walk in range(num_walks):
+                for length in range(walk_length):
+                    # neighbors = np.nonzero(adjacency_matrix[current_node, :])[0]
+                    # neighbors = adjacency_matrix[current_node].nonzero()[1]
+                    # neighbors = torch.nonzero(adjacency_matrix[current_node, :]).squeeze().numpy()
+                    # neighbors = np.nonzero(adjacency_matrix[current_node, :].toarray())[1]
+                    dense_adjacency_matrix = adjacency_matrix.to_dense()
+                    neighbors = torch.nonzero(dense_adjacency_matrix[current_node, :]).flatten()
+
+                    if len(neighbors) == 0:
+                        break
+                    next_node = np.random.choice(neighbors)
+                    personalized_vectors[node, :] += np.random.normal(size=d)
+                    current_node = next_node
+
+        personalized_vectors = personalized_vectors / np.linalg.norm(personalized_vectors, axis=1, keepdims=True)
+        return personalized_vectors
