@@ -283,10 +283,6 @@ class Loader(BasicDataset):
             current_node = node
             for walk in range(num_walks):
                 for length in range(walk_length):
-                    # neighbors = np.nonzero(adjacency_matrix[current_node, :])[0]
-                    # neighbors = adjacency_matrix[current_node].nonzero()[1]
-                    # neighbors = torch.nonzero(adjacency_matrix[current_node, :]).squeeze().numpy()
-                    # neighbors = np.nonzero(adjacency_matrix[current_node, :].toarray())[1]
                     dense_adjacency_matrix = adjacency_matrix.to_dense()
                     neighbors = torch.nonzero(dense_adjacency_matrix[current_node, :]).flatten()
 
@@ -296,5 +292,10 @@ class Loader(BasicDataset):
                     personalized_vectors[node, :] += np.random.normal(size=d)
                     current_node = next_node
 
-        personalized_vectors = personalized_vectors / np.linalg.norm(personalized_vectors, axis=1, keepdims=True)
+        epsilon = 1e-8  # Small epsilon value to avoid division by zero
+        norms = np.linalg.norm(personalized_vectors, axis=1, keepdims=True)
+        norms[norms == 0] = epsilon  # Replace zero norms with epsilon
+        personalized_vectors = personalized_vectors / norms
+
+        # personalized_vectors = personalized_vectors / np.linalg.norm(personalized_vectors, axis=1, keepdims=True)
         return personalized_vectors

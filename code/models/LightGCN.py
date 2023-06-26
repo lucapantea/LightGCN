@@ -81,7 +81,7 @@ class LightGCN(BasicModel):
         if self.config['pretrain'] == 0:
             nn.init.normal_(self.embedding_user.weight, std=0.1)
             nn.init.normal_(self.embedding_item.weight, std=0.1)
-            print('use NORMAL distribution initilizer')
+            print('use NORMAL distribution initializer')
         else:
             self.embedding_user.weight.data.copy_(
                 torch.from_numpy(self.config['user_emb']))
@@ -92,7 +92,7 @@ class LightGCN(BasicModel):
         self.sigmoid = nn.Sigmoid()
         self.graph = self.dataset.get_sparse_graph()
         self.embs = None
-        self.personalised_vecs = self.dataset.compute_personalized_vectors(self.graph, self.config['latent_dim_rec'], num_walks=1, walk_length=3)
+        self.personalised_vecs = self.dataset.compute_personalized_vectors(self.graph, self.config['latent_dim_rec'], num_walks=10, walk_length=10)
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
     @staticmethod
@@ -150,16 +150,13 @@ class LightGCN(BasicModel):
                 side_emb = torch.cat(temp_emb, dim=0)
                 all_emb = side_emb
             else:
-                all_emb = torch.sparse.mm(g_droped, all_emb)
+                all_emb = torch.sparse.mm(g_droped, all_emb.float())
 
-            print('t')
-            # Incorporate personalized vectors here
+            # Incorporate personalized vectors
             personalized_emb_scaled = personalized_emb * scaling_factor  # Apply scaling factor
 
             with torch.no_grad():
                 all_emb[:self.num_users, :] += personalized_emb_scaled
-
-            print('t')
 
             embs.append(all_emb)
         embs = torch.stack(embs, dim=1)

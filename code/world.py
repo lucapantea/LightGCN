@@ -59,10 +59,10 @@ config["l1"] = args.l1
 config["side_norm"] = args.side_norm
 config["embs_path"] = EMBS_PATH
 config["save_embs"] = args.save_embs
-# config["dataset"] = args.dataset
-config["dataset"] = 'lastfm'
-# config["model"] = args.model
-config["model"] = 'lgn'
+config["dataset"] = args.dataset
+# config["dataset"] = 'citeulike'
+config["model"] = args.model
+# config["model"] = 'lgn'
 config["save_model_by"] = args.save_model_by
 
 # Attention
@@ -84,6 +84,7 @@ if config["model"] not in all_models:
         f"Haven't supported {config['model']} yet!, try {all_models}")
 
 TRAIN_epochs = args.epochs
+# TRAIN_epochs = 40
 LOAD = args.load
 PATH = args.path
 topks = eval(args.topks)
