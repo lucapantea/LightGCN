@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
 #SBATCH --time=48:00:00
-#SBATCH --mem=32000M
+#SBATCH --mem=64000M
 #SBATCH --output=../out/slurm_output_%x.out
 
 module purge
