@@ -92,7 +92,9 @@ class LightGCN(BasicModel):
         self.sigmoid = nn.Sigmoid()
         self.graph = self.dataset.get_sparse_graph()
         self.embs = None
-        self.personalised_vecs = self.dataset.compute_personalized_vectors(self.graph, self.config['latent_dim_rec'], num_walks=10, walk_length=10)
+
+        # 8 walks and 8 steps to obtain embeddings of size 64
+        self.personalised_vecs = self.dataset.compute_personalized_vectors(self.graph, self.config['latent_dim_rec'], num_walks=8, walk_length=8)
         print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
     @staticmethod
