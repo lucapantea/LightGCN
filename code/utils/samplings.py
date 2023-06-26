@@ -9,7 +9,6 @@ LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 import numpy as np
 import world
 
-from datasets import BasicDataset
 from cppimport import imp_from_filepath
 from os.path import join
 
@@ -24,7 +23,17 @@ except Exception:
     sample_ext = False
 
 
-def uniform_sample_original(dataset: BasicDataset, neg_ratio=1):
+def uniform_sample_original(dataset, neg_ratio=1):
+    """
+    Uniformly sample negative items for BPR training.
+
+    Args:
+        dataset (BasicDataset): The dataset object.
+        neg_ratio (int, optional): The negative sampling ratio. Defaults to 1.
+
+    Returns:
+        np.array: Array of sampled negative items.
+    """
     all_pos = dataset.all_pos
 
     if sample_ext:
@@ -38,11 +47,15 @@ def uniform_sample_original(dataset: BasicDataset, neg_ratio=1):
     return samples
 
 
-def uniform_sample_original_python(dataset: BasicDataset):
+def uniform_sample_original_python(dataset):
     """
-    the original impliment of BPR Sampling in LightGCN
-    :return:
-        np.array
+    The original implementation of BPR Sampling in LightGCN.
+
+    Args:
+        dataset (BasicDataset): The dataset object.
+
+    Returns:
+        np.array: Array of sampled negative items.
     """
     user_num = dataset.train_data_size
     users = np.random.randint(0, dataset.n_users, user_num)
@@ -71,6 +84,17 @@ def uniform_sample_original_python(dataset: BasicDataset):
 
 
 def minibatch(*tensors, **kwargs):
+    """
+    Create minibatches from input tensors.
+
+    Args:
+        tensors (tuple): Tuple of input tensors.
+        batch_size (int, optional): The batch size. Defaults to the value in
+                                    world.config.
+
+    Yields:
+        tuple: Tuple of minibatches.
+    """
     batch_size = kwargs.get("batch_size", world.config["batch_size"])
 
     if len(tensors) == 1:
@@ -83,11 +107,22 @@ def minibatch(*tensors, **kwargs):
 
 
 def shuffle(*arrays, **kwargs):
+    """
+    Shuffle input arrays.
+
+    Args:
+        arrays (tuple): Tuple of input arrays.
+        indices (bool, optional): Whether to return the shuffled indices.
+                                  Defaults to False.
+
+    Returns:
+        tuple or np.array: Shuffled arrays or tuple of shuffled arrays and
+                           shuffled indices.
+    """
     require_indices = kwargs.get("indices", False)
 
     if len(set(len(x) for x in arrays)) != 1:
-        raise ValueError("All inputs to shuffle must have "
-                         "the same length.")
+        raise ValueError("All inputs to shuffle must have the same length.")
 
     shuffle_indices = np.arange(len(arrays[0]))
     np.random.shuffle(shuffle_indices)

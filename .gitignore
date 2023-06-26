@@ -184,11 +184,15 @@ fabric.properties
 # idea folder, uncomment if you don't need it
 .idea
 .DS_Store
+
+# vscode custom config
+.vscode
+
+# project env
 wandb
 runs
 checkpoints
 sources
 data
 embs
-
-.vscode
+emb_visuals
