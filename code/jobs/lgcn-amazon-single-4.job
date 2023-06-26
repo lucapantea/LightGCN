@@ -24,6 +24,7 @@ num_layers=(4)
 for nl in "${num_layers[@]}"; do
     srun python -u main.py \
         --model "lgn" \
+        --epochs 1000 \
         --topks "[1, 2, 3, 5, 10, 20]" \
         --dataset "amazon-book" \
         --lr 0.001 \
