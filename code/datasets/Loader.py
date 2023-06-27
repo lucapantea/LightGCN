@@ -214,7 +214,7 @@ class Loader(BasicDataset):
             try:
                 pre_adj_mat = sp.load_npz(join(self.path, "adj_mat.npz"))
                 print("successfully loaded...")
-                self.adj_mat = pre_adj_mat
+                adj_mat = pre_adj_mat
             except Exception:
                 print("Generating adjacency matrix")
                 start_time = time()
@@ -233,7 +233,7 @@ class Loader(BasicDataset):
                 print(f"costing {end_time-start_time}s, saved adj_mat...")
                 sp.save_npz(join(self.path, "adj_mat.npz"), adj_mat.tocsr())
 
-        return self.adj_mat
+        return adj_mat
 
     def __build_test(self):
         """
