@@ -47,7 +47,7 @@ def sparse_matrix_to_torch(X):
         coo.shape)
 
 def calc_A_hat(adj_matrix):
-    adj_matrix = sp.csr_matrix(adj_matrix.to_dense().numpy())
+    adj_matrix = sp.csr_matrix(adj_matrix.cpu().to_dense().numpy())
     nnodes = adj_matrix.shape[0]
     A = adj_matrix + sp.eye(nnodes)
     D_vec = np.sum(A, axis=1).A1 # degree matrix
