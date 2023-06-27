@@ -3,7 +3,6 @@ from .LightGCN import LightGCN
 from torch import nn
 import torch.nn.functional as F
 import scipy.sparse as sp
-import numpy as np
 import torch
 
 
@@ -29,32 +28,14 @@ class MixedDropout(nn.Module):
         else:
             return self.dense_dropout(input)
 
-def sparse_matrix_to_torch(X):
-    coo = X.tocoo()
-    indices = np.array([coo.row, coo.col])
-    return torch.sparse.FloatTensor(
-        torch.LongTensor(indices),
-        torch.FloatTensor(coo.data),
-        coo.shape)
-
-def calc_A_hat(adj_matrix):
-    adj_matrix = sp.csr_matrix(adj_matrix.to_dense().numpy())
-    nnodes = adj_matrix.shape[0]
-    A = adj_matrix + sp.eye(nnodes)
-    D_vec = np.sum(A, axis=1).A1 # degree matrix
-    D_vec_invsqrt_corr = 1 / np.sqrt(D_vec)
-    D_invsqrt_corr = sp.diags(D_vec_invsqrt_corr)
-    return D_invsqrt_corr @ A @ D_invsqrt_corr
-
 
 class PPRPowerIteration(nn.Module):
-    def __init__(self, adj_matrix: sp.spmatrix, alpha: float, niter: int, drop_prob: float = None):
+    def __init__(self, norm_adj_matrix, alpha: float, niter: int, drop_prob: float = None):
         super().__init__()
         self.alpha = alpha
         self.niter = niter
 
-        M = calc_A_hat(adj_matrix)
-        self.register_buffer('A_hat', sparse_matrix_to_torch((1 - alpha) * M))
+        self.register_buffer('A_hat', (1 - alpha) * norm_adj_matrix.to_sparse())
         if drop_prob is None or drop_prob == 0:
             self.dropout = lambda x: x
         else:
@@ -74,7 +55,12 @@ class APPNP(LightGCN):
 
     def __init__(self, config: dict, dataset: BasicDataset):
         super().__init__(config, dataset)
-        self.propagation = PPRPowerIteration(self.graph, alpha=0.1, niter=10)
+        n_nodes = self.adj_mat.shape[0]
+        norm_adj = self.dataset.normalize_adj(self.adj_mat + sp.eye(n_nodes))
+        self.propagation = PPRPowerIteration(norm_adj, alpha=config['alpha'], niter=config['num_walks'])
+
+        # To save memory
+        del norm_adj
 
     def forward(self):
         all_users_embeddings, all_items_embeddings = super().forward()
