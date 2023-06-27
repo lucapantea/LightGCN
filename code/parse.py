@@ -10,7 +10,7 @@ import json
 import argparse
 
 all_datasets = ["lastfm", "gowalla", "yelp2018", "amazon-book", "citeulike"]
-all_models = ["mf", "lgn", "base-a-lgn", "finer-a-lgn", "sdp-a-lgn", "w-sdp-a-lgn"]
+all_models = ["mf", "lgn", "base-a-lgn", "finer-a-lgn", "sdp-a-lgn", "w-sdp-a-lgn", "appnp"]
 
 
 def parse_args():
@@ -71,6 +71,12 @@ def parse_args():
     # Attention
     parser.add_argument('--attention_dim', type=int, default=2,
                         help='Number of dimensions for the attention projections')
+
+    # APPNP
+    parser.add_argument('--num_walks', type=int, default=10,
+                        help='Number of random walk steps for APPNP')
+    parser.add_argument('--alpha', type=float, default=0.1,
+                        help='The teleportation parameter for APPNP')
 
     return parser.parse_args()
 

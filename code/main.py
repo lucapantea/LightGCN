@@ -18,7 +18,8 @@ MODELS = {
     "base-a-lgn": BaseAttention,
     "finer-a-lgn": FinerAttention,
     "sdp-a-lgn": ScaledDotProductAttentionLightGCN,
-    "w-sdp-a-lgn": WeightedScaledDotProductAttentionLightGCN
+    "w-sdp-a-lgn": WeightedScaledDotProductAttentionLightGCN,
+    "appnp": LightGCN
 }
 
 
