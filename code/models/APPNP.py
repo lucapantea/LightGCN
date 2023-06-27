@@ -46,7 +46,7 @@ class PPRPowerIteration(nn.Module):
         self.niter = niter
 
         # Get non-zero indices and values
-        M = sp.csr_matrix(norm_adj_matrix.to_dense().numpy())
+        M = sp.csr_matrix(norm_adj_matrix.cpu().to_dense().numpy())
         self.register_buffer('A_hat', sparse_matrix_to_torch((1 - alpha) * M))
 
         # self.register_buffer('A_hat', torch.FloatTensor(((1 - alpha) * norm_adj_matrix).to_sparse()))
