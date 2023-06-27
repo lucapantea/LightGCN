@@ -8,7 +8,7 @@ import numpy as np
 
 from tqdm import tqdm
 from pprint import pprint
-from models import LightGCN, PureMF, BaseAttention, FinerAttention,ScaledDotProductAttentionLightGCN, WeightedScaledDotProductAttentionLightGCN
+from models import LightGCN, PureMF, BaseAttention, FinerAttention,ScaledDotProductAttentionLightGCN, WeightedScaledDotProductAttentionLightGCN, APPNP
 from losses import BPRLoss
 
 
@@ -18,7 +18,8 @@ MODELS = {
     "base-a-lgn": BaseAttention,
     "finer-a-lgn": FinerAttention,
     "sdp-a-lgn": ScaledDotProductAttentionLightGCN,
-    "w-sdp-a-lgn": WeightedScaledDotProductAttentionLightGCN
+    "w-sdp-a-lgn": WeightedScaledDotProductAttentionLightGCN,
+    "appnp": APPNP,
 }
 
 

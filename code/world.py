@@ -60,7 +60,9 @@ config["side_norm"] = args.side_norm
 config["embs_path"] = EMBS_PATH
 config["save_embs"] = args.save_embs
 config["dataset"] = args.dataset
+# config["dataset"] = 'citeulike'
 config["model"] = args.model
+# config["model"] = 'appnp'
 config["save_model_by"] = args.save_model_by
 
 # Attention
