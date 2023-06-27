@@ -87,7 +87,7 @@ class LightGCN(BasicModel):
                 torch.from_numpy(self.config['user_emb']))
             self.embedding_item.weight.data.copy_(
                 torch.from_numpy(self.config['item_emb']))
-            print('use pretarined data')
+            print('use pretrained data')
 
         self.sigmoid = nn.Sigmoid()
         self.graph = self.dataset.get_sparse_graph()
