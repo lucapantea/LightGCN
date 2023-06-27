@@ -69,6 +69,12 @@ config["save_model_by"] = args.save_model_by
 if 'attention_dim' in args and config['model'] == 'w-sdp-a-lgn':
     config["attention_dim"] = args.attention_dim
 
+# APPNP
+if 'num_walks' in args and 'alpha' in args and config['model'] == 'appnp':
+    config["num_walks"] = args.num_walks
+    config["alpha"] = args.alpha
+
+
 GPU = torch.cuda.is_available()
 device = torch.device("cuda" if GPU else "cpu")
 CORES = multiprocessing.cpu_count() // 2

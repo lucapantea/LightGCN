@@ -72,6 +72,12 @@ def parse_args():
     parser.add_argument('--attention_dim', type=int, default=2,
                         help='Number of dimensions for the attention projections')
 
+    # APPNP
+    parser.add_argument('--num_walks', type=int, default=10,
+                        help='Number of random walk steps for APPNP')
+    parser.add_argument('--alpha', type=float, default=0.1,
+                        help='The teleportation parameter for APPNP')
+
     return parser.parse_args()
 
 
