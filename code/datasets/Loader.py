@@ -84,6 +84,7 @@ class Loader(BasicDataset):
         self.test_user = np.array(test_user)
         self.test_item = np.array(test_item)
 
+        self.adj_mat = None
         self.Graph = None
         print(f"{self.train_data_size} interactions for training")
         print(f"{self.test_data_size} interactions for testing")
@@ -161,15 +162,61 @@ class Loader(BasicDataset):
 
         return torch.sparse.FloatTensor(index, data, torch.Size(coo.shape))
 
+    def normalize_adj(self, adj_mat):
+        print("loading normalized adjacency matrix")
+        norm_adj = None
+        try:
+            pre_adj_mat = sp.load_npz(join(self.path, "norm_adj_mat.npz"))
+            print("successfully loaded...")
+            norm_adj = pre_adj_mat
+        except Exception:
+            start_time = time()
+            rowsum = np.array(adj_mat.sum(axis=1))
+
+            # L1 normalization
+            exponent = -1 if self.config["l1"] else -0.5
+            d_inv = np.power(rowsum, exponent).flatten()
+            d_inv[np.isinf(d_inv)] = 0.
+            d_mat = sp.diags(d_inv)
+
+            # left normalization
+            if self.config["side_norm"].lower() == "l":
+                norm_adj = d_mat.dot(adj_mat)
+
+            # right normalization
+            elif self.config["side_norm"].lower() == "r":
+                norm_adj = adj_mat.dot(d_mat)
+
+            # symmetric normalization
+            elif self.config["side_norm"].lower() == "both":
+                norm_adj = d_mat.dot(adj_mat)
+                norm_adj = norm_adj.dot(d_mat)
+
+            norm_adj = norm_adj.tocsr()
+
+            end_time = time()
+            print(f"costing {end_time - start_time}s, saved norm_adj_mat...")
+            sp.save_npz(join(self.path, "norm_adj_mat.npz"), adj_mat)
+
+        if self.split:
+            norm_adj = self.__split_A_hat(norm_adj)
+            print("done split matrix")
+        else:
+            norm_adj = self.__convert_sp_mat_to_sp_tensor(norm_adj)
+            norm_adj = norm_adj.coalesce().to(world.device)
+            print("don't split the matrix")
+
+        return norm_adj
+
     def get_sparse_graph(self):
         print("loading adjacency matrix")
-        if self.Graph is None:
+        if self.adj_mat is None:
             try:
-                pre_adj_mat = sp.load_npz(self.path + "/s_pre_adj_mat.npz")
+                pre_adj_mat = sp.load_npz(join(self.path, "adj_mat.npz"))
                 print("successfully loaded...")
-                norm_adj = pre_adj_mat
+                self.adj_mat = pre_adj_mat
             except Exception:
-                print("generating adjacency matrix")
+                print("Generating adjacency matrix")
                 start_time = time()
 
                 num_nodes = self.n_users + self.m_items
@@ -182,42 +229,11 @@ class Loader(BasicDataset):
                 adj_mat[self.n_users:, : self.n_users] = R.T
                 adj_mat = adj_mat.todok()
 
-                rowsum = np.array(adj_mat.sum(axis=1))
-
-                # L1 normalization
-                exponent = -1 if self.config["l1"] else -0.5
-                d_inv = np.power(rowsum, exponent).flatten()
-                d_inv[np.isinf(d_inv)] = 0.
-                d_mat = sp.diags(d_inv)
-
-                # left normalization
-                if self.config["side_norm"].lower() == "l":
-                    norm_adj = d_mat.dot(adj_mat)
-
-                # right normalization
-                elif self.config["side_norm"].lower() == "r":
-                    norm_adj = adj_mat.dot(d_mat)
-
-                # symmetric normalization
-                elif self.config["side_norm"].lower() == "both":
-                    norm_adj = d_mat.dot(adj_mat)
-                    norm_adj = norm_adj.dot(d_mat)
-
-                norm_adj = norm_adj.tocsr()
-
                 end_time = time()
-                print(f"costing {end_time-start_time}s, saved norm_mat...")
-                sp.save_npz(join(self.path, "s_pre_adj_mat.npz"), norm_adj)
+                print(f"costing {end_time-start_time}s, saved adj_mat...")
+                sp.save_npz(join(self.path, "adj_mat.npz"), adj_mat.tocsr())
 
-            if self.split:
-                self.Graph = self.__split_A_hat(norm_adj)
-                print("done split matrix")
-            else:
-                self.Graph = self.__convert_sp_mat_to_sp_tensor(norm_adj)
-                self.Graph = self.Graph.coalesce().to(world.device)
-                print("don't split the matrix")
-
-        return self.Graph
+        return self.adj_mat
 
     def __build_test(self):
         """

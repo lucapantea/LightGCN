@@ -189,5 +189,6 @@ runs
 checkpoints
 sources
 embs
+*.npz
 
 .vscode

@@ -89,7 +89,8 @@ class LightGCN(BasicModel):
             print('use pretarined data')
 
         self.sigmoid = nn.Sigmoid()
-        self.graph = self.dataset.get_sparse_graph()
+        self.adj_mat = self.dataset.get_sparse_graph()
+        self.graph = self.dataset.normalize_adj(self.adj_mat)
         self.embs = None
 
         print(f"lgn is already to go(dropout:{self.config['dropout']})")

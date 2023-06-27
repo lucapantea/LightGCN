@@ -45,7 +45,8 @@ if __name__ == "__main__":
         dataloader = Loader(
             config=world.config, path=os.path.join("..", "data", dataset)
         )
-        graph = dataloader.get_sparse_graph().to(world.device)
+        adj_mat = dataloader.get_sparse_graph()
+        graph = dataloader.normalize_adj(adj_mat).to(world.device)
         num_users = dataloader.n_user
 
         emb_file_path = os.path.join(world.EMBS_PATH, emb_file)
