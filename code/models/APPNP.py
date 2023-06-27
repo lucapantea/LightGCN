@@ -42,7 +42,6 @@ class PPRPowerIteration(nn.Module):
             self.dropout = MixedDropout(drop_prob)
 
     def forward(self, E: torch.FloatTensor):
-        print('')
         preds = E
         for _ in range(self.niter):
             A_drop = self.dropout(self.A_hat)
