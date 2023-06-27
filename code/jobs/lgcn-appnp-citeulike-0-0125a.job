@@ -20,8 +20,8 @@ cd $HOME/LightGCN/code
 wandb online
 
 num_layers=(1 2 3 4)
-num_walks=(15)
-alpha=(0.05)
+num_walks=(10 15 20)
+alpha=(0.0125)
 
 for nl in "${num_layers[@]}"; do
     for nw in "${num_walks[@]}"; do
