@@ -4,7 +4,17 @@ from torch import nn
 import torch.nn.functional as F
 import scipy.sparse as sp
 import torch
+import numpy as np
 
+
+
+def sparse_matrix_to_torch(X):
+    coo = X.tocoo()
+    indices = np.array([coo.row, coo.col])
+    return torch.sparse.FloatTensor(
+        torch.LongTensor(indices),
+        torch.FloatTensor(coo.data),
+        coo.shape)
 
 class SparseDropout(nn.Module):
     def __init__(self, p):
@@ -35,7 +45,13 @@ class PPRPowerIteration(nn.Module):
         self.alpha = alpha
         self.niter = niter
 
-        self.register_buffer('A_hat', (1 - alpha) * norm_adj_matrix.to_sparse())
+        # Get non-zero indices and values
+        M = sp.csr_matrix(norm_adj_matrix.to_dense().numpy())
+        self.register_buffer('A_hat', sparse_matrix_to_torch((1 - alpha) * M))
+
+        # self.register_buffer('A_hat', torch.FloatTensor(((1 - alpha) * norm_adj_matrix).to_sparse()))
+        # self.register_buffer('A_hat', sparse_matrix_to_torch((1 - alpha) * norm_adj_matrix))
+
         if drop_prob is None or drop_prob == 0:
             self.dropout = lambda x: x
         else:
