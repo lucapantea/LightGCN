@@ -2,7 +2,7 @@
 
 #SBATCH --partition=gpu_titanrtx_shared_course
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=LightGCN-AmazonMovies
+#SBATCH --job-name=LightGCN-AmazonMovies-123
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
 #SBATCH --time=48:00:00
@@ -17,19 +17,20 @@ module load Anaconda3/2021.05
 source activate lightgcn-gpu
 
 cd $HOME/LightGCN/code
+wandb online
 
-num_layers=(1 2 3 4)
+num_layers=(1 2 3)
 
 for nl in "${num_layers[@]}"; do
     srun python -u main.py \
         --model "lgn" \
+        --topks "[1, 2, 3, 5, 10, 20]" \
         --dataset "amazon-movies" \
         --lr 0.001 \
         --decay 0.0001 \
         --seed 2020 \
         --recdim 64 \
-        --bpr_batch 2048 \
+        --batch_size 1024 \
         --layer $nl \
         --epochs 1000
 done
-

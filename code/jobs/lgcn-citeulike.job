@@ -31,6 +31,7 @@ for nl in "${num_layers[@]}"; do
         --seed 2020 \
         --recdim 64 \
         --batch_size 1024 \
-        --layer $nl
+        --layer $nl \
+        --epochs 1000
 done
 
