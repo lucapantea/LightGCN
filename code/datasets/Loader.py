@@ -164,50 +164,50 @@ class Loader(BasicDataset):
     def get_sparse_graph(self):
         print("loading adjacency matrix")
         if self.Graph is None:
-            try:
-                pre_adj_mat = sp.load_npz(self.path + "/s_pre_adj_mat.npz")
-                print("successfully loaded...")
-                norm_adj = pre_adj_mat
-            except Exception:
-                print("generating adjacency matrix")
-                start_time = time()
+            # try:
+            #     pre_adj_mat = sp.load_npz(self.path + "/s_pre_adj_mat.npz")
+            #     print("successfully loaded...")
+            #     norm_adj = pre_adj_mat
+            # except Exception:
+            print("generating adjacency matrix")
+            # start_time = time()
 
-                num_nodes = self.n_users + self.m_items
-                adj_mat = sp.dok_matrix(
-                    (num_nodes, num_nodes), dtype=np.float32)
-                adj_mat = adj_mat.tolil()
+            num_nodes = self.n_users + self.m_items
+            adj_mat = sp.dok_matrix(
+                (num_nodes, num_nodes), dtype=np.float32)
+            adj_mat = adj_mat.tolil()
 
-                R = self.user_item_net.tolil()
-                adj_mat[: self.n_users, self.n_users:] = R
-                adj_mat[self.n_users:, : self.n_users] = R.T
-                adj_mat = adj_mat.todok()
+            R = self.user_item_net.tolil()
+            adj_mat[: self.n_users, self.n_users:] = R
+            adj_mat[self.n_users:, : self.n_users] = R.T
+            adj_mat = adj_mat.todok()
 
-                rowsum = np.array(adj_mat.sum(axis=1))
+            rowsum = np.array(adj_mat.sum(axis=1))
 
-                # L1 normalization
-                exponent = -1 if self.config["l1"] else -0.5
-                d_inv = np.power(rowsum, exponent).flatten()
-                d_inv[np.isinf(d_inv)] = 0.
-                d_mat = sp.diags(d_inv)
+            # L1 normalization
+            exponent = -1 if self.config["l1"] else -0.5
+            d_inv = np.power(rowsum, exponent).flatten()
+            d_inv[np.isinf(d_inv)] = 0.
+            d_mat = sp.diags(d_inv)
 
-                # left normalization
-                if self.config["side_norm"].lower() == "l":
-                    norm_adj = d_mat.dot(adj_mat)
+            # left normalization
+            if self.config["side_norm"].lower() == "l":
+                norm_adj = d_mat.dot(adj_mat)
 
-                # right normalization
-                elif self.config["side_norm"].lower() == "r":
-                    norm_adj = adj_mat.dot(d_mat)
+            # right normalization
+            elif self.config["side_norm"].lower() == "r":
+                norm_adj = adj_mat.dot(d_mat)
 
-                # symmetric normalization
-                elif self.config["side_norm"].lower() == "both":
-                    norm_adj = d_mat.dot(adj_mat)
-                    norm_adj = norm_adj.dot(d_mat)
+            # symmetric normalization
+            elif self.config["side_norm"].lower() == "both":
+                norm_adj = d_mat.dot(adj_mat)
+                norm_adj = norm_adj.dot(d_mat)
 
-                norm_adj = norm_adj.tocsr()
+            norm_adj = norm_adj.tocsr()
 
-                end_time = time()
-                print(f"costing {end_time-start_time}s, saved norm_mat...")
-                sp.save_npz(join(self.path, "s_pre_adj_mat.npz"), norm_adj)
+            # end_time = time()
+            # print(f"costing {end_time-start_time}s, saved norm_mat...")
+            # sp.save_npz(join(self.path, "s_pre_adj_mat.npz"), norm_adj)
 
             if self.split:
                 self.Graph = self.__split_A_hat(norm_adj)
