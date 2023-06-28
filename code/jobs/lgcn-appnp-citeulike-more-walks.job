@@ -2,7 +2,7 @@
 
 #SBATCH --partition=gpu_titanrtx_shared_course
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=LightGCN-34-Appnp-Citeulike
+#SBATCH --job-name=LightGCN-Morew-Appnp-Citeulike
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
 #SBATCH --time=48:00:00
@@ -20,8 +20,8 @@ cd $HOME/LightGCN/code
 wandb online
 
 num_layers=(1 2 3 4)
-num_walks=(15)
-alpha=(0.1 0.2 0.3 0.4 0.5)
+num_walks=(25 30 35 40 45 50)
+alpha=(0.1)
 
 for nl in "${num_layers[@]}"; do
     for nw in "${num_walks[@]}"; do
