@@ -9,7 +9,7 @@ LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 import json
 import argparse
 
-all_datasets = ["lastfm", "gowalla", "yelp2018", "amazon-book", "citeulike"]
+all_datasets = ["lastfm", "gowalla", "yelp2018", "amazon-book", "citeulike", "movielens", "amazon-beauty", "amazon-cds", "amazon-electro", "amazon-movies"]
 all_models = ["mf", "lgn", "base-a-lgn", "finer-a-lgn", "sdp-a-lgn", "w-sdp-a-lgn", "appnp"]
 
 
