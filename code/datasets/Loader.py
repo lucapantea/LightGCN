@@ -182,7 +182,13 @@ class Loader(BasicDataset):
             adj_mat[self.n_users:, : self.n_users] = R.T
             adj_mat = adj_mat.todok()
 
-            rowsum = np.array(adj_mat.sum(axis=1))
+            if not self.config["l1"] and (self.config["side_norm"].lower() == "l" or self.config["side_norm"].lower() == "r"):
+                rowsum = np.array(np.square(adj_mat).sum(axis=1))
+                # rowsum = np.square(np.array(adj_mat.sum(axis=1))
+                # rowsum_squared = np.square(adj_mat).sum(axis=1)
+                # rowsum = np.sqrt(rowsum_squared)
+            else:
+                rowsum = np.array(adj_mat.sum(axis=1))
 
             # L1 normalization
             exponent = -1 if self.config["l1"] else -0.5
