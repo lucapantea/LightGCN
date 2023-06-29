@@ -31,15 +31,15 @@ if __name__ == "__main__":
             user_embeddings[:, 0],
             user_embeddings[:, 1],
             c="r",
-            s=1,
+            s=10,
             marker="o"
         )
         plt.scatter(
             item_embeddings[:, 0],
             item_embeddings[:, 1],
             c="b",
-            s=1,
-            marker="x"
+            s=10,
+            marker="o"
         )
 
         plt.legend(["Users", "Items"])
