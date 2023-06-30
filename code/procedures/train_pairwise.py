@@ -1,7 +1,7 @@
 """
 Created on Mar 1, 2020
 Pytorch Implementation of LightGCN in
-Xiangnan He et al. 
+Xiangnan He et al.
 LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 @author: Jianbai Ye (gusye@mail.ustc.edu.cn)
 
@@ -26,7 +26,7 @@ def train_pairwise(dataset, model, loss_class, optimizer):
         optimizer: The optimizer for model parameters.
 
     Returns:
-        tuple: A tuple containing the average loss value and timing information.
+        tuple: A tuple containing the average loss value and timing info.
     """
     model.train()
 
@@ -47,8 +47,9 @@ def train_pairwise(dataset, model, loss_class, optimizer):
     avg_loss = 0.
 
     for (batch_i, (batch_users, batch_pos, batch_neg)) \
-            in tqdm(enumerate(utils.minibatch(users, pos_items, neg_items, batch_size=world.config["batch_size"])),
-                    desc="Training", total=total_batch, leave=False):
+            in tqdm(enumerate(utils.minibatch(users, pos_items, neg_items,
+                    batch_size=world.config["batch_size"])), desc="Training",
+                    total=total_batch, leave=False):
         optimizer.zero_grad()
         all_users_embeddings, all_items_embeddings = model()
 

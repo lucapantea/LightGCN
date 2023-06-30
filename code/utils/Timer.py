@@ -8,6 +8,7 @@ LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 """
 import time
 
+
 class Timer:
     """
     Time context manager for code block

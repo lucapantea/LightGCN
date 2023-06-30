@@ -66,11 +66,11 @@ def parse_args():
     parser.add_argument("--scheduler", type=str, default="step_lr",
                         help="scheduler to use for adjusting learning rate")
     parser.add_argument("--scheduler_params", type=json.loads, default={},
-                        help="additional parameters for the scheduler in JSON format")
+                        help="more params for the scheduler in JSON format")
 
     # Attention
-    parser.add_argument('--attention_dim', type=int, default=2,
-                        help='Number of dimensions for the attention projections')
+    parser.add_argument("--attention_dim", type=int, default=2,
+                        help="Number of dims for the attention projections")
 
     # APPNP
     parser.add_argument('--num_walks', type=int, default=10,
@@ -79,5 +79,3 @@ def parse_args():
                         help='The teleportation parameter for APPNP')
 
     return parser.parse_args()
-
-

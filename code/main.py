@@ -8,7 +8,12 @@ import numpy as np
 
 from tqdm import tqdm
 from pprint import pprint
-from models import LightGCN, PureMF, BaseAttention, FinerAttention,ScaledDotProductAttentionLightGCN, WeightedScaledDotProductAttentionLightGCN
+from models import LightGCN
+from models import PureMF
+from models import BaseAttention
+from models import FinerAttention
+from models import ScaledDotProductAttentionLightGCN
+from models import WeightedScaledDotProductAttentionLightGCN
 from losses import BPRLoss
 
 
@@ -28,7 +33,8 @@ def main():
     utils.set_seed(world.seed)
 
     if world.model_name not in MODELS:
-        raise NotImplementedError(f"Model name '{world.model_name}' not recognized.")
+        raise NotImplementedError(
+            f"Model name '{world.model_name}' not recognized.")
 
     # Initialize model
     dataset = utils.get_dataset(world.DATA_PATH, world.dataset)
@@ -48,6 +54,9 @@ def main():
     print("Test Topks:", world.topks)
     print("Loss function:", criterion.__class__)
     print("===========end===================")
+
+    using_attention = "attention_dim" in world.config
+    using_scaled_dot_prod = world.config["model"] == "w-sdp-a-lgn"
 
     # Get the checkpoint filename
     weight_file = utils.get_weights_file_name(
@@ -70,8 +79,9 @@ def main():
         # Extra weight filename parameters are now supported.
 
         # Weighted scaled dot product
-        **{'attention_dim': world.config['attention_dim']} if ('attention_dim' in world.config
-                                                               and world.config['model'] == 'w-sdp-a-lgn') else {}
+        **{"attention_dim": world.config["attention_dim"]} if (
+            using_attention and using_scaled_dot_prod
+        ) else {}
     )
     print(f"Loading and saving to {weight_file}")
 
@@ -88,20 +98,21 @@ def main():
         model_name=world.model_name,
         dataset=world.dataset,
         num_layers=world.config["lightGCN_n_layers"],
-        latent_dim_rec=world.config["latent_dim_rec"]
+        latent_dim=world.config["latent_dim_rec"]
         # Extra wandb filename parameters are now supported.
     )
 
     # Initialize wandb
-    wandb.init(project=world.WANDB_PROJECT, entity=world.WANDB_ENTITY, 
+    wandb.init(project=world.WANDB_PROJECT, entity=world.WANDB_ENTITY,
                config=world.config, reinit=True, name=wandb_run_name,
-               tags=['latest'])
+               tags=["latest"])
     wandb.watch(model)
 
     # Saving the best model instance based on set variable
     save_model_by = world.config["save_model_by"]
     best_test_metric = float("-inf")
 
+    bins = [f"Bin {bin_num + 1}" for bin_num in range(world.num_bins)]
     try:
         print("Beginning training...")
         with tqdm(range(world.TRAIN_epochs), desc="Epoch") as pbar:
@@ -113,58 +124,72 @@ def main():
                 # Evaluate the model on the validation set
                 if epoch % 10 == 0:
                     test_metrics = procedures.eval_pairwise(
-                        dataset, model, world.config['multicore'])
+                        dataset, model, world.config["multicore"])
 
                     # Result dictionary to log to wandb
                     results = {}
 
                     # Exploration table: Metrics vs. Bin
                     exploration_table_data = []
-                    columns = ['Metric'] + [f'Bin {bin_num+1}' for bin_num in range(world.num_bins)]  
+                    columns = ["Metric"] + bins
 
-                    # For each k, log the precision, recall, and ndcg, and construct the exploration table    
+                    # For each k, log the precision, recall, and ndcg,
+                    # and construct the exploration table
                     for i_k, k in enumerate(world.topks):
-                        results[f'Precision@{k}'] = test_metrics['precision'][i_k]
-                        results[f'Recall@{k}'] = test_metrics['recall'][i_k]
-                        results[f'NDCG@{k}'] = test_metrics['ndcg'][i_k]
-                        exploration_table_data.append([f'Exploration_vs_precision@{k}'] + test_metrics['exploration_vs_precision'][i_k, :].tolist())
-                        exploration_table_data.append([f'Exploration_vs_recall@{k}'] + test_metrics['exploration_vs_recall'][i_k, :].tolist())
-                        exploration_table_data.append([f'Exploration_vs_ndcg@{k}'] + test_metrics['exploration_vs_ndcg'][i_k, :].tolist())
-                    
+                        results[f"Precision@{k}"] = test_metrics["precision"][i_k]
+                        results[f"Recall@{k}"] = test_metrics["recall"][i_k]
+                        results[f"NDCG@{k}"] = test_metrics["ndcg"][i_k]
+                        exploration_table_data.append(
+                            [f"Exploration_vs_precision@{k}"] + test_metrics["exploration_vs_precision"][i_k, :].tolist())
+                        exploration_table_data.append(
+                            [f"Exploration_vs_recall@{k}"] + test_metrics["exploration_vs_recall"][i_k, :].tolist())
+                        exploration_table_data.append(
+                            [f"Exploration_vs_ndcg@{k}"] + test_metrics["exploration_vs_ndcg"][i_k, :].tolist())
+
                     # Log the exploration table, diversity, and novelty
-                    results['Exploration Table'] = wandb.Table(data=exploration_table_data, columns=columns)
-                    results['Diversity'] = test_metrics['diversity']
-                    results['Novelty'] = test_metrics['novelty']
+                    results["Exploration Table"] = wandb.Table(
+                        data=exploration_table_data, columns=columns)
+                    results["Diversity"] = test_metrics["diversity"]
+                    results["Novelty"] = test_metrics["novelty"]
 
                     # Log the results to wandb
-                    wandb.log({**results, 'Epoch': epoch})
+                    wandb.log({**results, "Epoch": epoch})
 
                     # Save the model if it is the best so far
-                    if test_metrics[save_model_by][np.argmax(test_metrics[save_model_by])] > best_test_metric:
-                        best_test_metric = test_metrics[save_model_by][np.argmax(test_metrics[save_model_by])]
-                        wandb.run.summary[f"best_{save_model_by}"] = best_test_metric
+                    best_val = np.argmax(test_metrics[save_model_by])
+                    if test_metrics[save_model_by][best_val] > best_test_metric:
+                        best_test_metric = test_metrics[save_model_by][best_val]
+                        run_name = f"best_{save_model_by}"
+                        wandb.run.summary[run_name] = best_test_metric
                         ckpt = {
                             "state_dict": model.state_dict(),
                             "optimizer_state_dict": optimizer.state_dict(),
-                            f"best_{save_model_by}@{max(world.topks)}": best_test_metric,
+                            f"{run_name}@{max(world.topks)}": best_test_metric,
                             "best_epoch": epoch
                         }
                         torch.save(ckpt, weight_file)
-                        if world.config['save_embs']:
+                        if world.config["save_embs"]:
                             for i, emb in enumerate(model.get_embedding_matrix().unbind(dim=1)):
-                                torch.save(emb, os.path.join(world.config['embs_path'],
-                                                             f"emb_layer-{i}_{os.path.basename(weight_file)}"))
+                                name_weight_file = os.path.basename(weight_file)
+                                torch.save(
+                                    emb,
+                                    os.path.join(
+                                        world.config["embs_path"],
+                                        f"emb_layer-{i}_{name_weight_file}")
+                                )
 
                 # Update the progress bar
-                pbar.set_postfix(
-                    {'BPR loss': f'{avg_loss:.3f}', 'sampling time': sampling_time})
+                pbar.set_postfix({
+                    "BPR loss": f"{avg_loss:.3f}",
+                    "sampling time": sampling_time
+                })
 
     except KeyboardInterrupt:
         # Training can be safely interrupted with Ctrl+C
-        print('Exiting training early because of keyboard interrupt.')
+        print("Exiting training early because of keyboard interrupt.")
     finally:
         wandb.finish()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

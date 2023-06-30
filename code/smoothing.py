@@ -8,6 +8,18 @@ from tqdm import tqdm
 
 
 def compute_smoothness(graph, embeddings, type_, num_users):
+    """
+    Compute the smoothness of embeddings based on the given graph.
+
+    Args:
+        graph (list): The graph representing the user-item interactions.
+        embeddings (torch.Tensor): Embeddings of users and items.
+        type_ (str): The type of embeddings ("users" or "items").
+        num_users (int): Number of users.
+
+    Returns:
+        float: The smoothness of the embeddings.
+    """
     smoothness = 0
 
     idx_start = 0 if type_ == "users" else num_users
@@ -52,8 +64,10 @@ if __name__ == "__main__":
         embeddings = torch.load(emb_file_path).to(world.device)
         embeddings /= torch.linalg.norm(embeddings, dim=1, ord=2).unsqueeze(-1)
 
-        users_smoothness = compute_smoothness(graph, embeddings, type_="users", num_users=num_users)
-        items_smoothness = compute_smoothness(graph, embeddings, type_="items", num_users=num_users)
+        users_smoothness = compute_smoothness(
+            graph, embeddings, type_="users", num_users=num_users)
+        items_smoothness = compute_smoothness(
+            graph, embeddings, type_="items", num_users=num_users)
 
         with open("smoothness_results.txt", "a") as w:
             w.write("users")
