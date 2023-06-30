@@ -114,18 +114,8 @@ def get_wandb_run_name(model_name, dataset, num_layers, latent_dim, **kwargs):
     return wandb_run_name
 
 
-def get_dataset(data_path, dataset):
-    """
-    Get the dataset object based on the dataset name.
-
-    Args:
-        data_path (str): The path to the data directory.
-        dataset (str): The dataset name.
-
-    Returns:
-        object: The dataset object.
-    """
-    if dataset in ["gowalla", "yelp2018", "amazon-book"]:
+def get_dataset(data_path: str, dataset: BasicDataset):
+    if dataset in ["gowalla", "yelp2018", "amazon-book", "citeulike", "movielens", "amazon-beauty", "amazon-cds", "amazon-electro", "amazon-movies"]:
         return Loader(
             config=world.config,
             path=os.path.join(data_path, dataset))

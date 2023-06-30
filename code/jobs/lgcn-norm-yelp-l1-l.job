@@ -1,0 +1,37 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu_titanrtx_shared_course
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=LightGCN-Norm-Yelp-l1-l
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=3
+#SBATCH --time=48:00:00
+#SBATCH --mem=32000M
+#SBATCH --output=../out/slurm_output_%x.out
+
+module purge
+module load 2021
+module load Anaconda3/2021.05
+
+# activate the environment
+source activate lightgcn-gpu
+
+cd $HOME/LightGCN/code
+wandb online
+
+norm_type_w_L1=(l) # with L1 norm
+
+for type in "${norm_type_w_L1[@]}"; do
+    srun python -u main.py \
+        --model "lgn" \
+        --dataset "yelp2018" \
+        --lr 0.001 \
+        --decay 0.0001 \
+        --seed 2020 \
+        --recdim 64 \
+        --batch_size 1024 \
+        --layer 3 \
+        --side_norm "$type" \
+        --l1
+done
+

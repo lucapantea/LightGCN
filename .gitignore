@@ -193,6 +193,5 @@ wandb
 runs
 checkpoints
 sources
-data
 embs
 emb_visuals

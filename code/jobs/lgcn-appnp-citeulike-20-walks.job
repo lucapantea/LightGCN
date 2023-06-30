@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu_titanrtx_shared_course
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=LightGCN-34-Appnp-Citeulike
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=3
+#SBATCH --time=48:00:00
+#SBATCH --mem=32000M
+#SBATCH --output=../out/slurm_output_%x.out
+
+module purge
+module load 2021
+module load Anaconda3/2021.05
+
+# activate the environment
+source activate lightgcn-gpu
+
+cd $HOME/LightGCN/code
+wandb online
+
+num_layers=(1 2 3 4)
+num_walks=(20)
+alpha=(0.1 0.2 0.3 0.4 0.5)
+
+for nl in "${num_layers[@]}"; do
+    for nw in "${num_walks[@]}"; do
+        for a in "${alpha[@]}"; do
+            srun python -u main.py \
+                --model "appnp" \
+                --num_walks $nw \
+                --alpha $a \
+                --topks "[1, 2, 3, 5, 10, 20]" \
+                --dataset "citeulike" \
+                --lr 0.001 \
+                --decay 0.0001 \
+                --seed 2020 \
+                --recdim 64 \
+                --batch_size 1024 \
+                --layer $nl
+        done
+    done
+done
+
