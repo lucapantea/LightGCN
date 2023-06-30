@@ -18,7 +18,8 @@ class BPRLoss(object):
 
     Methods:
         __call__(users_embeddings, pos_items_embeddings, neg_items_embeddings,
-                 users_embeddings_layer0, pos_items_embeddings_layer0, neg_items_embeddings_layer0):
+                 users_embeddings_layer0, pos_items_embeddings_layer0, 
+                 neg_items_embeddings_layer0):
             Compute the BPR loss given the embeddings.
 
     """
@@ -47,9 +48,12 @@ class BPRLoss(object):
             users_embeddings: Embeddings of the users.
             pos_items_embeddings: Embeddings of the positive items.
             neg_items_embeddings: Embeddings of the negative items.
-            users_embeddings_layer0: Embeddings of the users in the first layer.
-            pos_items_embeddings_layer0: Embeddings of the positive items in the first layer.
-            neg_items_embeddings_layer0: Embeddings of the negative items in the first layer.
+            users_embeddings_layer0: Embeddings of the users in the first
+                                     layer.
+            pos_items_embeddings_layer0: Embeddings of the positive items in
+                                         the first layer.
+            neg_items_embeddings_layer0: Embeddings of the negative items in
+                                         the first layer.
 
         Returns:
             torch.Tensor: Computed BPR loss.

@@ -12,43 +12,67 @@ from sklearn.metrics import roc_auc_score
 
 
 def novelty(ground_truth, train_items_interacted_batch, topk):
+    """
+    Calculate the novelty of recommended items.
+
+    Args:
+        ground_truth (list): List of ground truth items for each user.
+        train_items_interacted_batch (list): List of items interacted by each
+                                             user in the training set.
+        topk (int): The number of top items to consider.
+
+    Returns:
+        float: The novelty score.
+    """
     novelty = 0.
-    # We want to calculate the proportion of novel items recommended to a user
-    for user_train_beh, user_recom in zip(ground_truth, train_items_interacted_batch):
+    for user_train_beh, user_recom in zip(ground_truth, 
+                                          train_items_interacted_batch):
         set_user_train_beh = set(user_train_beh)
         set_user_recom = set(user_recom)
-        num_repeated_elements = len(set_user_train_beh.intersection(set_user_recom))
+        num_repeated_elements = len(
+            set_user_train_beh.intersection(set_user_recom))
         novelty += (topk - num_repeated_elements) / topk
     return novelty
 
 
 def mean_intra_list_distance(recommendation_lists, item_embeddings):
-    # Get the embeddings of the recommended items
+    """
+    Compute the mean intra-list distance (ILD) of recommended items.
+
+    Args:
+        recommendation_lists (torch.Tensor): Tensor of recommended items.
+        item_embeddings (torch.Tensor): Tensor of item embeddings.
+
+    Returns:
+        float: The mean ILD value.
+    """
     recommended_embeddings = item_embeddings[recommendation_lists]
-
-    # Compute pairwise distances
     dists = torch.cdist(recommended_embeddings, recommended_embeddings, p=2)
-
-    # Since the distance matrix is symmetric, we take the upper triangular part excluding the diagonal
     upper_triangular_part = dists.triu(diagonal=1)
 
-    # Compute the ILD
     if recommendation_lists.shape == 3:  # batched computation
         list_length = recommendation_lists.shape[2]
-        ILDs = upper_triangular_part.sum(dim=[2, 3]) / (list_length * (list_length - 1) / 2)
+        ILDs = upper_triangular_part.sum(dim=[2, 3])
+        ILDs /= (list_length * (list_length - 1) / 2)
     else:  # non-batched computation
         list_length = recommendation_lists.shape[1]
-        ILDs = upper_triangular_part.sum(dim=[1, 2]) / (list_length * (list_length - 1) / 2)
+        ILDs = upper_triangular_part.sum(dim=[1, 2])
+        ILDs /= (list_length * (list_length - 1) / 2)
 
     return torch.sum(ILDs).item()
 
 
-
 def recall_precision_at_k(test_data, r, k):
     """
-    test_data should be a list? cause users may have different amount of pos items. shape (test_batch, k)
-    pred_data : shape (test_batch, k) NOTE: pred_data should be pre-sorted
-    k : top-k
+    Compute the recall and precision at k.
+
+    Args:
+        test_data (list): List of ground truth items for each user.
+        r (numpy.ndarray): Array of predicted items.
+        k (int): The value of k.
+
+    Returns:
+        dict: Dictionary with recall and precision values.
     """
     right_pred = r[:, :k].sum(1)
     recall_n = np.array([len(test_data[i]) for i in range(len(test_data))])
@@ -61,7 +85,14 @@ def recall_precision_at_k(test_data, r, k):
 
 def mrr_at_k_r(r, k):
     """
-    Mean Reciprocal Rank
+    Compute the Mean Reciprocal Rank (MRR) at k.
+
+    Args:
+        r (numpy.ndarray): Array of predicted items.
+        k (int): The value of k.
+
+    Returns:
+        float: The MRR value.
     """
     pred_data = r[:, : k]
     scores = np.log2(1. / np.arange(1, k + 1))
@@ -73,8 +104,15 @@ def mrr_at_k_r(r, k):
 
 def ndcg_at_k_r(test_data, r, k):
     """
-    Normalized Discounted Cumulative Gain
-    rel_i = 1 or 0, so 2^{rel_i} - 1 = 1 or 0
+    Compute the Normalized Discounted Cumulative Gain (NDCG) at k.
+
+    Args:
+        test_data (list): List of ground truth items for each user.
+        r (numpy.ndarray): Array of predicted items.
+        k (int): The value of k.
+
+    Returns:
+        float: The NDCG value.
     """
     assert len(r) == len(test_data)
 
@@ -97,6 +135,17 @@ def ndcg_at_k_r(test_data, r, k):
 
 
 def auc(all_item_scores, dataset, test_data):
+    """
+    Compute the Area Under the ROC Curve (AUC).
+
+    Args:
+        all_item_scores (numpy.ndarray): Array of item scores.
+        dataset (object): The dataset object.
+        test_data (list): List of ground truth items for each user.
+
+    Returns:
+        float: The AUC value.
+    """
     r_all = np.zeros((dataset.m_items, ))
     r_all[test_data] = 1
     r = r_all[all_item_scores >= 0]
@@ -106,6 +155,17 @@ def auc(all_item_scores, dataset, test_data):
 
 
 def get_label(test_data, pred_data):
+    """
+    Get the label matrix indicating whether an item is in the ground truth
+    list.
+
+    Args:
+        test_data (list): List of ground truth items for each user.
+        pred_data (numpy.ndarray): Array of predicted items.
+
+    Returns:
+        numpy.ndarray: The label matrix.
+    """
     r = []
 
     for i in range(len(test_data)):
@@ -117,4 +177,4 @@ def get_label(test_data, pred_data):
 
         r.append(pred)
 
-    return np.array(r).astype('float')
+    return np.array(r).astype("float")
