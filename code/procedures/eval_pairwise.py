@@ -204,3 +204,5 @@ def eval_pairwise(dataset, model, multicore=0):
             results["exploration_vs_precision"] += \
                 result["exploration_vs_precision"]
             results["exploration_vs_recall"] += result["exploration_vs_recall"]
+
+    return results
